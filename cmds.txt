@@ -1,0 +1,6 @@
+ng g c features/public/quests/quests.page --standalone --skip-tests
+ng g c features/public/quests/quest-list/quest-list --standalone --skip-tests
+ng g c features/public/quests/quest-details/quest-details --standalone --skip-tests
+ng g c features/public/quests/quest-filters/quest-filters --standalone --skip-tests
+ng g c features/public/quests/quest-card/quest-card --standalone --skip-tests
+ng g c features/public/quests/quest-wizard/quest-wizard --standalone --skip-tests

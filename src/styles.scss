@@ -1,0 +1,12 @@
+@use "tailwindcss";
+
+/* ─── Theme overrides ─── */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ─── Global custom styles ─── */
+
+html {
+  scroll-behavior: smooth;
+}

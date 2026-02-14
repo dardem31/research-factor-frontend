@@ -1,0 +1,55 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="cancel()">
+  <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+    <h2 class="text-xl font-bold text-gray-900">Вход в RF-Protocol</h2>
+    <p class="mt-1 text-sm text-gray-500">Введите любые данные — авторизация в stub-режиме.</p>
+
+    <form (ngSubmit)="submit()" class="mt-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700" for="login-user">Имя пользователя</label>
+        <input
+          id="login-user"
+          type="text"
+          class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+          placeholder="researcher"
+          [(ngModel)]="username"
+          name="username"
+          required
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700" for="login-pass">Пароль</label>
+        <input
+          id="login-pass"
+          type="password"
+          class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+          placeholder="любой пароль"
+          [(ngModel)]="password"
+          name="password"
+          required
+        />
+      </div>
+
+      @if (error()) {
+        <div class="rounded-md bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</div>
+      }
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+          (click)="cancel()"
+        >
+          Отмена
+        </button>
+        <button
+          type="submit"
+          class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:opacity-40"
+          [disabled]="loading() || !username.trim()"
+        >
+          Войти
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

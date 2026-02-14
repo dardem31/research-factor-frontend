@@ -1,0 +1,90 @@
+name: ResearchFactor Config
+version: 0.0.1
+schema: v1
+
+models:
+  - name: anthropic/claude-sonnet-4.5
+    provider: openrouter
+    model: anthropic/claude-sonnet-4.5
+    apiBase: https://openrouter.ai/api/v1
+    apiKey: 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
+  - name: moonshotai/kimi-k2.5
+    provider: openrouter
+    model: moonshotai/kimi-k2.5
+    apiBase: https://openrouter.ai/api/v1
+    apiKey: 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
+  - name: anthropic/claude-opus-4.6
+    provider: openrouter
+    model: anthropic/claude-opus-4.6
+    apiBase: https://openrouter.ai/api/v1
+    apiKey: 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
+
+  - name: qwen2.5-coder 1.5b
+    provider: ollama
+    model: qwen2.5-coder:1.5b
+    roles:
+      - apply
+      - autocomplete
+      - chat
+      - edit
+
+# Контекстные провайдеры
+contextProviders:
+  # Автоматически включать README в контекст
+  - name: file
+    params:
+      files:
+        - README.md
+
+  # Поиск по кодовой базе
+  - name: code
+    params:
+      maxResults: 10
+
+  # Текущая открытая директория
+  - name: folder
+
+# Слэш-команды для быстрых действий
+slashCommands:
+  - name: review
+    description: Review code for Angular 21+ best practices
+    prompt: |
+      Review this code following our project standards:
+      {{{ input }}}
+
+  - name: refactor
+    description: Suggest refactoring following our coding rules
+    prompt: |
+      Suggest refactoring improvements:
+      {{{ input }}}
+
+# Настройки табуляции и авто-комплита
+tabAutocompleteModel:
+  provider: openrouter
+  model: liquid/lfm-2.5-1.2b-thinking:free
+  apiBase: https://openrouter.ai/api/v1
+  apiKey: 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
+
+tabAutocompleteOptions:
+  maxPromptTokens: 1024
+  debounceDelay: 300
+  maxSuffixPercentage: 0.25
+
+# Настройки встраивания для поиска по коду
+embeddingsProvider:
+  provider: openai
+  model: text-embedding-3-small
+  apiBase: https://openrouter.ai/api/v1
+  apiKey: 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
+
+# Настройки reranker для улучшения контекста
+reranker:
+  name: free-trial
+
+# Игнорируемые файлы и папки
+ignore:
+  - "**/.angular/**"
+  - "**/.idea/**"
+  - "**/node_modules/**"
+  - "**/public/**"
+  - ".gitignore"

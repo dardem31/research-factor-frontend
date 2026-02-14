@@ -1,0 +1,261 @@
+<div class="mx-auto max-w-3xl">
+  <!-- Stepper -->
+  <div class="mb-8 flex items-center gap-2 text-sm font-medium">
+    @for (s of [{n: 1, label: 'Проект'}, {n: 2, label: 'Research Lines'}, {n: 3, label: 'Обзор'}]; track s.n) {
+      <div class="flex items-center gap-2">
+        <div
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+          [class]="step() >= s.n ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'"
+        >
+          {{ s.n }}
+        </div>
+        <span [class]="step() >= s.n ? 'text-gray-900' : 'text-gray-400'">{{ s.label }}</span>
+      </div>
+      @if (s.n < 3) {
+        <div class="h-px flex-1" [class]="step() > s.n ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+      }
+    }
+  </div>
+
+  <!-- ═══════ STEP 1: Project Info ═══════ -->
+  @if (step() === 1) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900">Новый проект</h2>
+      <p class="mt-1 text-sm text-gray-500">Укажите название и описание исследования.</p>
+
+      <div class="mt-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700" for="title">Название *</label>
+          <input
+            id="title"
+            type="text"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="Например: Исследование свойств нового полимера"
+            [(ngModel)]="title"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700" for="desc">Описание</label>
+          <textarea
+            id="desc"
+            rows="4"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="Краткое описание цели исследования..."
+            [(ngModel)]="description"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:opacity-40"
+          [disabled]="!title.trim()"
+          (click)="nextToLines()"
+        >
+          Далее →
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════ STEP 2: Research Lines ═══════ -->
+  @if (step() === 2) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900">Research Lines</h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Добавьте фазы исследования. Каждая линия содержит Objectives (цели) и Steps (шаги).
+      </p>
+
+      <!-- Add line -->
+      <div class="mt-6 flex gap-2">
+        <input
+          type="text"
+          class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+          placeholder="Название фазы, напр.: In-vitro тестирование"
+          [(ngModel)]="newLineTitle"
+          (keydown.enter)="addLine()"
+        />
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+          [disabled]="!newLineTitle.trim()"
+          (click)="addLine()"
+        >
+          Добавить
+        </button>
+      </div>
+
+      <!-- Lines list -->
+      @if (lines().length > 0) {
+        <div class="mt-6 space-y-6">
+          @for (line of lines(); track $index; let i = $index) {
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-semibold text-gray-900">
+                  <span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">{{ i + 1 }}</span>
+                  {{ line.title }}
+                </h3>
+                <button
+                  class="cursor-pointer rounded-md p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                  (click)="removeLine(i)"
+                  title="Удалить фазу"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <!-- Objectives -->
+              <div class="mt-4">
+                <h4 class="text-sm font-medium text-gray-600">🎯 Objectives</h4>
+                @if (line.objectives.length > 0) {
+                  <ul class="mt-2 space-y-1">
+                    @for (obj of line.objectives; track $index; let j = $index) {
+                      <li class="flex items-center gap-2 text-sm text-gray-700">
+                        <span class="flex-1">• {{ obj }}</span>
+                        <button
+                          class="cursor-pointer text-xs text-gray-400 hover:text-red-500"
+                          (click)="removeObjective(i, j)"
+                        >✕</button>
+                      </li>
+                    }
+                  </ul>
+                }
+                <div class="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                    placeholder="Напр.: Снижение глюкозы > 10%"
+                    [ngModel]="newObjective[i] || ''"
+                    (ngModelChange)="newObjective[i] = $event"
+                    (keydown.enter)="addObjective(i)"
+                  />
+                  <button
+                    class="cursor-pointer rounded-md bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-300"
+                    (click)="addObjective(i)"
+                  >+</button>
+                </div>
+              </div>
+
+              <!-- Steps -->
+              <div class="mt-4">
+                <h4 class="text-sm font-medium text-gray-600">📋 Steps</h4>
+                @if (line.steps.length > 0) {
+                  <ol class="mt-2 space-y-1">
+                    @for (st of line.steps; track $index; let k = $index) {
+                      <li class="flex items-center gap-2 text-sm text-gray-700">
+                        <span class="flex-1">{{ k + 1 }}. {{ st }}</span>
+                        <button
+                          class="cursor-pointer text-xs text-gray-400 hover:text-red-500"
+                          (click)="removeStep(i, k)"
+                        >✕</button>
+                      </li>
+                    }
+                  </ol>
+                }
+                <div class="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                    placeholder="Напр.: Подготовка образцов"
+                    [ngModel]="newStep[i] || ''"
+                    (ngModelChange)="newStep[i] = $event"
+                    (keydown.enter)="addStep(i)"
+                  />
+                  <button
+                    class="cursor-pointer rounded-md bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-300"
+                    (click)="addStep(i)"
+                  >+</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="mt-6 flex justify-between">
+        <button
+          class="cursor-pointer rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+          (click)="back()"
+        >
+          ← Назад
+        </button>
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:opacity-40"
+          [disabled]="lines().length === 0"
+          (click)="nextToReview()"
+        >
+          Далее →
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════ STEP 3: Review ═══════ -->
+  @if (step() === 3) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900">Обзор проекта</h2>
+      <p class="mt-1 text-sm text-gray-500">Проверьте данные перед созданием.</p>
+
+      <div class="mt-6 space-y-4">
+        <div>
+          <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Название</span>
+          <p class="text-lg font-semibold text-gray-900">{{ title }}</p>
+        </div>
+
+        @if (description) {
+          <div>
+            <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Описание</span>
+            <p class="text-sm text-gray-700">{{ description }}</p>
+          </div>
+        }
+
+        <div>
+          <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Research Lines ({{ lines().length }})</span>
+          <div class="mt-3 space-y-4">
+            @for (line of lines(); track $index; let i = $index) {
+              <div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                <h4 class="font-semibold text-gray-900">
+                  {{ i + 1 }}. {{ line.title }}
+                </h4>
+                @if (line.objectives.length > 0) {
+                  <div class="mt-2">
+                    <span class="text-xs font-medium text-gray-500">Objectives:</span>
+                    <ul class="mt-1 space-y-0.5">
+                      @for (obj of line.objectives; track $index) {
+                        <li class="text-sm text-gray-600">🎯 {{ obj }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (line.steps.length > 0) {
+                  <div class="mt-2">
+                    <span class="text-xs font-medium text-gray-500">Steps:</span>
+                    <ol class="mt-1 space-y-0.5">
+                      @for (st of line.steps; track $index; let k = $index) {
+                        <li class="text-sm text-gray-600">{{ k + 1 }}. {{ st }}</li>
+                      }
+                    </ol>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-between">
+        <button
+          class="cursor-pointer rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+          (click)="back()"
+        >
+          ← Назад
+        </button>
+        <button
+          class="cursor-pointer rounded-lg bg-green-600 px-8 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-green-700"
+          (click)="submit()"
+        >
+          ✓ Создать проект
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,33 @@
+<header class="border-b border-gray-200 bg-white">
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+    <a class="text-lg font-bold tracking-tight text-gray-900" href="/">RF-Protocol</a>
+
+    <nav class="flex items-center gap-3">
+      @if (auth.isAuthenticated()) {
+        <a
+          routerLink="/account"
+          class="rounded-md px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+        >
+          Личный кабинет
+        </a>
+        <button
+          class="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+          (click)="auth.logout()"
+        >
+          Выход
+        </button>
+      } @else {
+        <button
+          class="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+          (click)="openLogin()"
+        >
+          Войти
+        </button>
+      }
+    </nav>
+  </div>
+
+  @if (showLogin()) {
+    <hk-login-dialog (close)="closeLogin()" />
+  }
+</header>
