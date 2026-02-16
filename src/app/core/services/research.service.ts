@@ -1,5 +1,5 @@
 import {computed, Injectable, signal} from '@angular/core';
-import {Research, ResearchLine, ResearchStep, Objective} from '../models/research.model';
+import {Research, ResearchLine, ResearchTask, Objective} from '../models/research.model';
 
 @Injectable({providedIn: 'root'})
 export class ResearchService {
@@ -37,7 +37,7 @@ export class ResearchService {
         description: desc,
         status: 'PENDING' as const,
       })),
-      steps: [],
+      tasks: [],
     };
     this.updateProject(projectId, p => ({
       ...p,
@@ -46,9 +46,9 @@ export class ResearchService {
     return line;
   }
 
-  /** Add a ResearchStep to a ResearchLine */
-  addStep(projectId: string, lineId: string, title: string): ResearchStep {
-    const step: ResearchStep = {
+  /** Add a ResearchTask to a ResearchLine */
+  addTask(projectId: string, lineId: string, title: string): ResearchTask {
+    const task: ResearchTask = {
       id: crypto.randomUUID(),
       title,
       status: 'DRAFT',
@@ -58,10 +58,10 @@ export class ResearchService {
     this.updateProject(projectId, p => ({
       ...p,
       lines: p.lines.map(l =>
-        l.id === lineId ? {...l, steps: [...l.steps, step]} : l
+        l.id === lineId ? {...l, tasks: [...l.tasks, task]} : l
       ),
     }));
-    return step;
+    return task;
   }
 
   /** Delete research project */
@@ -80,13 +80,13 @@ export class ResearchService {
     }));
   }
 
-  /** Remove a step from a line */
-  removeStep(projectId: string, lineId: string, stepId: string) {
+  /** Remove a task from a line */
+  removeTask(projectId: string, lineId: string, taskId: string) {
     this.updateProject(projectId, p => ({
       ...p,
       lines: p.lines.map(l =>
         l.id === lineId
-          ? {...l, steps: l.steps.filter(s => s.id !== stepId)}
+          ? {...l, tasks: l.tasks.filter(s => s.id !== taskId)}
           : l
       ),
     }));

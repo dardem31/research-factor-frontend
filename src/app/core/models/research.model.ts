@@ -12,7 +12,7 @@ export interface ResearchLine {
   title: string;
   status: LineStatus;
   objectives: Objective[];
-  steps: ResearchStep[];
+  tasks: ResearchTask[];
 }
 
 export type LineStatus = 'LOCKED' | 'ACTIVE' | 'COMPLETED';
@@ -25,15 +25,15 @@ export interface Objective {
 
 export type ObjectiveStatus = 'PENDING' | 'FULFILLED' | 'FAILED';
 
-export interface ResearchStep {
+export interface ResearchTask {
   id: string;
   title: string;
-  status: StepStatus;
+  status: TaskStatus;
   logEntries: LogEntry[];
   artifacts: Artifact[];
 }
 
-export type StepStatus = 'DRAFT' | 'SUBMITTED';
+export type TaskStatus = 'DRAFT' | 'SUBMITTED';
 
 export interface LogEntry {
   id: string;

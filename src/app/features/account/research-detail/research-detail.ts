@@ -1,7 +1,7 @@
 import {Component, computed, inject} from '@angular/core';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {ResearchService} from '../../../core/services/research.service';
-import {LineStatus, ObjectiveStatus, StepStatus} from '../../../core/models/research.model';
+import {LineStatus, ObjectiveStatus, TaskStatus} from '../../../core/models/research.model';
 
 @Component({
   standalone: true,
@@ -43,8 +43,8 @@ export default class ResearchDetailPage {
     return map[status];
   }
 
-  stepStatusColor(status: StepStatus): string {
-    const map: Record<StepStatus, string> = {
+  taskStatusColor(status: TaskStatus): string {
+    const map: Record<TaskStatus, string> = {
       DRAFT: 'bg-yellow-100 text-yellow-700',
       SUBMITTED: 'bg-green-100 text-green-700',
     };

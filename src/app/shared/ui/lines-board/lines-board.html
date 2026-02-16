@@ -1,0 +1,262 @@
+<!-- Top bar -->
+<div class="mb-4 flex items-center justify-between">
+  <h2 class="text-xl font-bold text-gray-900">Research Lines</h2>
+  <button
+    class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-indigo-700"
+    (click)="addLine()"
+  >
+    + Добавить Line
+  </button>
+</div>
+
+@if (lines().length === 0) {
+  <!-- Empty state -->
+  <div class="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
+    <div class="text-center">
+      <p class="text-sm text-gray-400">Нет Research Lines</p>
+      <button
+        class="mt-3 cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+        (click)="addLine()"
+      >
+        Создать первую
+      </button>
+    </div>
+  </div>
+} @else {
+  <!-- Horizontal scroll container -->
+  <div class="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    @for (line of lines(); track $index; let i = $index) {
+      <!-- Column -->
+      <div class="flex w-72 shrink-0 flex-col rounded-xl border border-gray-200 bg-gray-50">
+
+        <!-- Column header -->
+        <div class="border-b border-gray-200 px-4 py-3">
+          <div class="flex items-center justify-between">
+            <h3 class="truncate text-sm font-bold text-gray-900" title="{{ line.title }}">
+              <span class="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">{{ i + 1 }}</span>
+              {{ line.title }}
+            </h3>
+            <button
+              class="cursor-pointer rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+              (click)="removeLine(i)"
+              title="Удалить Line"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          @if (line.description) {
+            <p class="mt-1 line-clamp-2 text-xs text-gray-500">{{ line.description }}</p>
+          }
+          <!-- Action buttons -->
+          <div class="mt-2 flex gap-1.5">
+            <button
+              class="cursor-pointer rounded-md bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-100"
+              (click)="openEditLine(i)"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              class="cursor-pointer rounded-md bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-100"
+              (click)="openObjectives(i)"
+            >
+              🎯 Objectives
+              @if (line.objectives.length > 0) {
+                <span class="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">{{ line.objectives.length }}</span>
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Tasks list -->
+        <div class="flex-1 space-y-2 overflow-y-auto p-3" style="max-height: 400px">
+          @for (task of line.tasks; track $index; let k = $index) {
+            <button
+              class="w-full cursor-pointer rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+              (click)="openEditTask(i, k)"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-sm font-medium text-gray-800">{{ task.title }}</span>
+                <span class="shrink-0 text-[10px] text-gray-400">#{{ k + 1 }}</span>
+              </div>
+              @if (task.description) {
+                <p class="mt-1 line-clamp-2 text-xs text-gray-500">{{ task.description }}</p>
+              }
+            </button>
+          }
+        </div>
+
+        <!-- Add task footer -->
+        <div class="border-t border-gray-200 p-3">
+          <div class="flex gap-1.5">
+            <input
+              type="text"
+              class="flex-1 rounded-md border border-gray-300 px-2.5 py-1.5 text-xs transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              placeholder="Новый Task..."
+              [(ngModel)]="newTaskTitle"
+              (keydown.enter)="addTask(i)"
+            />
+            <button
+              class="cursor-pointer rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+              [disabled]="!newTaskTitle.trim()"
+              (click)="addTask(i)"
+            >+</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- MODALS                                         -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<!-- ─── Modal: Edit Line ─── -->
+@if (modal() === 'editLine') {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="closeModal()">
+    <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900">Редактирование Research Line</h3>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Название</label>
+          <input
+            type="text"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            [(ngModel)]="editLineTitle"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Описание</label>
+          <textarea
+            rows="3"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="Опишите фазу исследования..."
+            [(ngModel)]="editLineDescription"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+          (click)="closeModal()"
+        >
+          Отмена
+        </button>
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          (click)="saveEditLine()"
+        >
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── Modal: Objectives ─── -->
+@if (modal() === 'objectives' && activeLine(); as line) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="closeModal()">
+    <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900">🎯 Objectives — {{ line.title }}</h3>
+      <p class="mt-1 text-sm text-gray-500">Критерии успеха для этой фазы.</p>
+
+      @if (line.objectives.length > 0) {
+        <ul class="mt-4 space-y-2">
+          @for (obj of line.objectives; track $index; let j = $index) {
+            <li class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5">
+              <span class="text-sm text-gray-700">{{ obj }}</span>
+              <button
+                class="cursor-pointer rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                (click)="removeObjective(j)"
+              >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="mt-4 text-sm italic text-gray-400">Пока нет Objectives.</p>
+      }
+
+      <div class="mt-4 flex gap-2">
+        <input
+          type="text"
+          class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+          placeholder="Напр.: Снижение глюкозы > 10%"
+          [(ngModel)]="newObjectiveText"
+          (keydown.enter)="addObjective()"
+        />
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+          [disabled]="!newObjectiveText.trim()"
+          (click)="addObjective()"
+        >
+          Добавить
+        </button>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button
+          class="cursor-pointer rounded-lg bg-gray-100 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+          (click)="closeModal()"
+        >
+          Готово
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── Modal: Edit Task ─── -->
+@if (modal() === 'editTask') {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" (click)="closeModal()">
+    <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-gray-900">Редактирование Task</h3>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Название</label>
+          <input
+            type="text"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            [(ngModel)]="editTaskTitle"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Описание</label>
+          <textarea
+            rows="4"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="Опишите задачу..."
+            [(ngModel)]="editTaskDescription"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between">
+        <button
+          class="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+          (click)="removeTask(activeLineIndex(), activeTaskIndex())"
+        >
+          Удалить Task
+        </button>
+        <div class="flex gap-3">
+          <button
+            class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+            (click)="closeModal()"
+          >
+            Отмена
+          </button>
+          <button
+            class="cursor-pointer rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            (click)="saveEditTask()"
+          >
+            Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
