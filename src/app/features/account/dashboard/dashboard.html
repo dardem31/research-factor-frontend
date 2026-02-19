@@ -26,25 +26,47 @@
   } @else {
     <div class="mt-6 space-y-4">
       @for (project of research.projects(); track project.id) {
-        <div class="flex items-start justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
-          <a [routerLink]="['/account', project.id]" class="flex-1">
-            <h3 class="text-lg font-semibold text-gray-900">{{ project.title }}</h3>
-            <p class="mt-1 line-clamp-2 text-sm text-gray-500">{{ project.description }}</p>
-            <div class="mt-3 flex items-center gap-4 text-xs text-gray-400">
-              <span>{{ project.lines.length }} Research Lines</span>
-              <span>Создан: {{ project.createdAt | date:'short' }}</span>
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+          <div class="flex items-start justify-between">
+            <a [routerLink]="['/account', project.id, 'edit']" class="flex-1">
+              <div class="flex items-center gap-2.5">
+                <h3 class="text-lg font-semibold text-gray-900">{{ project.title }}</h3>
+                <span class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" [class]="statusColor(project.status)">
+                  {{ statusLabel(project.status) }}
+                </span>
+              </div>
+              @if (project.hypothesis) {
+                <p class="mt-1 line-clamp-1 text-sm text-gray-500">{{ project.hypothesis }}</p>
+              }
+              <div class="mt-3 flex items-center gap-4 text-xs text-gray-400">
+                <span>{{ project.lines.length }} Research Lines</span>
+                <span>{{ project.primaryOutcomes.length }} Primary Outcomes</span>
+                <span>Создан: {{ project.createdAt | date:'short' }}</span>
+              </div>
+            </a>
+
+            <div class="ml-4 flex shrink-0 items-center gap-2">
+              @if (project.status === 'DRAFT') {
+                <button
+                  class="cursor-pointer rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600"
+                  (click)="submitForReview(project.id, $event)"
+                  title="Отправить на рецензирование"
+                >
+                  Submit for Review
+                </button>
+              }
+              <button
+                class="cursor-pointer rounded-md p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                (click)="delete(project.id)"
+                title="Удалить"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
-          </a>
-          <button
-            class="ml-4 cursor-pointer rounded-md p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-            (click)="delete(project.id)"
-            title="Удалить"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          </div>
         </div>
       }
     </div>

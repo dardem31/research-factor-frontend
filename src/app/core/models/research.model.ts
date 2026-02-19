@@ -7,17 +7,50 @@ export interface Research {
   title: string;
   hypothesis: string;
   description: string;
-  blindingType: BlindingType;
+  status: ResearchStatus;
+  ethicsApprovalDocument: Artifact | null;
   subjectGroups: SubjectGroup[];
   trackedParameters: TrackedParameter[];
+  protocol: StudyProtocol;
+  primaryOutcomes: PrimaryOutcome[];
   lines: ResearchLine[];
+  report: ResearchReport | null;
   createdAt: string;
 }
 
-export type BlindingType = 'SINGLE_BLIND';
+export type ResearchStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'ACTIVE' | 'COMPLETED';
 
 // ════════════════════════════════════════════
-// B. SubjectGroup
+// B. StudyProtocol
+// ════════════════════════════════════════════
+
+export interface StudyProtocol {
+  id: string;
+  primaryOutcome: string;
+  sampleSizeJustification: string;
+  statisticalMethod: string;
+  randomizationMethod: string;
+  blindingDetails: string;
+  interventionDescription: string;
+  inclusionCriteria: string;
+  exclusionCriteria: string;
+  earlyStoppingCriteria: string;
+}
+
+// ════════════════════════════════════════════
+// C. PrimaryOutcome
+// ════════════════════════════════════════════
+
+export interface PrimaryOutcome {
+  id: string;
+  text: string;
+  status: PrimaryOutcomeStatus;
+}
+
+export type PrimaryOutcomeStatus = 'DRAFT' | 'APPROVED';
+
+// ════════════════════════════════════════════
+// D. SubjectGroup
 // ════════════════════════════════════════════
 
 export interface SubjectGroup {
@@ -27,7 +60,7 @@ export interface SubjectGroup {
 }
 
 // ════════════════════════════════════════════
-// C. Subject
+// E. Subject
 // ════════════════════════════════════════════
 
 export interface Subject {
@@ -38,7 +71,7 @@ export interface Subject {
 }
 
 // ════════════════════════════════════════════
-// D. ParameterField
+// F. ParameterField
 // ════════════════════════════════════════════
 
 export interface ParameterField {
@@ -49,7 +82,7 @@ export interface ParameterField {
 }
 
 // ════════════════════════════════════════════
-// E. TrackedParameter
+// G. TrackedParameter
 // ════════════════════════════════════════════
 
 export interface TrackedParameter {
@@ -59,7 +92,7 @@ export interface TrackedParameter {
 }
 
 // ════════════════════════════════════════════
-// F. ResearchLine (Phase)
+// H. ResearchLine (Phase)
 // ════════════════════════════════════════════
 
 export interface ResearchLine {
@@ -67,6 +100,7 @@ export interface ResearchLine {
   sequenceOrder: number;
   title: string;
   description: string;
+  duration: string;
   status: LineStatus;
   stageQuestions: StageQuestion[];
   tasks: ResearchTask[];
@@ -76,7 +110,7 @@ export interface ResearchLine {
 export type LineStatus = 'LOCKED' | 'ACTIVE' | 'COMPLETED';
 
 // ════════════════════════════════════════════
-// G. StageQuestion
+// I. StageQuestion
 // ════════════════════════════════════════════
 
 export interface StageQuestion {
@@ -88,7 +122,7 @@ export interface StageQuestion {
 export type StageQuestionStatus = 'DRAFT' | 'APPROVED';
 
 // ════════════════════════════════════════════
-// H. ResearchTask
+// J. ResearchTask
 // ════════════════════════════════════════════
 
 export interface ResearchTask {
@@ -104,7 +138,7 @@ export interface ResearchTask {
 export type TaskStatus = 'DRAFT' | 'SUBMITTED';
 
 // ════════════════════════════════════════════
-// I. LogEntry
+// K. LogEntry
 // ════════════════════════════════════════════
 
 export interface LogEntry {
@@ -116,7 +150,7 @@ export interface LogEntry {
 }
 
 // ════════════════════════════════════════════
-// J. SubjectUpdate
+// L. SubjectUpdate
 // ════════════════════════════════════════════
 
 export interface SubjectUpdate {
@@ -126,7 +160,7 @@ export interface SubjectUpdate {
 }
 
 // ════════════════════════════════════════════
-// K. ParameterChange
+// M. ParameterChange
 // ════════════════════════════════════════════
 
 export interface ParameterChange {
@@ -137,7 +171,7 @@ export interface ParameterChange {
 }
 
 // ════════════════════════════════════════════
-// L. Objective
+// N. Objective
 // ════════════════════════════════════════════
 
 export interface Objective {
@@ -156,7 +190,7 @@ export interface Objective {
 export type ObjectiveStatus = 'PENDING' | 'FULFILLED' | 'FAILED';
 
 // ════════════════════════════════════════════
-// M. StageQuestionAnswer
+// O. StageQuestionAnswer
 // ════════════════════════════════════════════
 
 export interface StageQuestionAnswer {
@@ -166,7 +200,7 @@ export interface StageQuestionAnswer {
 }
 
 // ════════════════════════════════════════════
-// N. ObjectiveReview
+// P. ObjectiveReview
 // ════════════════════════════════════════════
 
 export interface ObjectiveReview {
@@ -181,7 +215,48 @@ export interface ObjectiveReview {
 export type ReviewVerdict = 'APPROVED' | 'REJECTED' | 'REVISION_REQUESTED';
 
 // ════════════════════════════════════════════
-// O. Artifact
+// Q. ResearchReport
+// ════════════════════════════════════════════
+
+export interface ResearchReport {
+  id: string;
+  summary: string;
+  narrative: string;
+  primaryOutcomeAnswers: PrimaryOutcomeAnswer[];
+  protocolDeviations: string;
+  adverseEvents: string;
+  status: ResearchReportStatus;
+  submittedAt: string;
+  review: ResearchReportReview | null;
+}
+
+export type ResearchReportStatus = 'PENDING' | 'FULFILLED' | 'FAILED';
+
+// ════════════════════════════════════════════
+// R. PrimaryOutcomeAnswer
+// ════════════════════════════════════════════
+
+export interface PrimaryOutcomeAnswer {
+  id: string;
+  primaryOutcomeId: string;
+  answer: string;
+}
+
+// ════════════════════════════════════════════
+// S. ResearchReportReview
+// ════════════════════════════════════════════
+
+export interface ResearchReportReview {
+  id: string;
+  researchReportId: string;
+  reviewerId: string;
+  verdict: ReviewVerdict;
+  comment: string;
+  createdAt: string;
+}
+
+// ════════════════════════════════════════════
+// T. Artifact
 // ════════════════════════════════════════════
 
 export interface Artifact {

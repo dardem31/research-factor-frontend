@@ -13,6 +13,7 @@ export interface TaskDraft {
 export interface LineDraft {
   title: string;
   description: string;
+  duration: string;
   stageQuestions: string[];
   tasks: TaskDraft[];
 }
@@ -40,6 +41,7 @@ export class LinesBoard {
   // Temp form fields
   editLineTitle = '';
   editLineDescription = '';
+  editLineDuration = '';
   newQuestionText = '';
   newTaskTitle = '';
 
@@ -48,7 +50,7 @@ export class LinesBoard {
   addLine() {
     this.lines.update(list => [
       ...list,
-      {title: 'Research Line ' + (list.length + 1), description: '', stageQuestions: [], tasks: []},
+      {title: 'Research Line ' + (list.length + 1), description: '', duration: '', stageQuestions: [], tasks: []},
     ]);
     this.openEditLine(this.lines().length - 1);
   }
@@ -65,6 +67,7 @@ export class LinesBoard {
     this.activeLineIndex.set(lineIndex);
     this.editLineTitle = line.title;
     this.editLineDescription = line.description;
+    this.editLineDuration = line.duration;
     this.modal.set('editLine');
   }
 
@@ -73,7 +76,7 @@ export class LinesBoard {
     this.lines.update(list =>
       list.map((l, idx) =>
         idx === i
-          ? {...l, title: this.editLineTitle.trim() || l.title, description: this.editLineDescription}
+          ? {...l, title: this.editLineTitle.trim() || l.title, description: this.editLineDescription, duration: this.editLineDuration}
           : l
       )
     );

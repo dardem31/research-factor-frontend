@@ -50,6 +50,9 @@
               </button>
             }
           </div>
+          @if (line.duration) {
+            <p class="mt-1 text-xs font-medium text-indigo-600">{{ line.duration }}</p>
+          }
           @if (line.description) {
             <p class="mt-1 line-clamp-2 text-xs text-gray-500">{{ line.description }}</p>
           }
@@ -144,6 +147,15 @@
             type="text"
             class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
             [(ngModel)]="editLineTitle"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Длительность</label>
+          <input
+            type="text"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="e.g., 4 weeks, 30 days"
+            [(ngModel)]="editLineDuration"
           />
         </div>
         <div>

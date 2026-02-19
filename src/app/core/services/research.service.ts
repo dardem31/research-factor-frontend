@@ -1,19 +1,32 @@
 import {computed, Injectable, signal} from '@angular/core';
 import {
-  Research, ResearchLine, ResearchTask,
+  Research, ResearchLine, ResearchTask, StudyProtocol,
 } from '../models/research.model';
 
 export interface CreateResearchInput {
   title: string;
   hypothesis: string;
   description: string;
+  protocol: Omit<StudyProtocol, 'id'>;
+  primaryOutcomes: string[];         // question texts
   subjectGroups: string[];           // labels only
+  trackedParameters: {name: string; unit: string}[];
+}
+
+export interface UpdateResearchInput {
+  title: string;
+  hypothesis: string;
+  description: string;
+  protocol: Omit<StudyProtocol, 'id'>;
+  primaryOutcomes: string[];         // full list — reconciled with existing
+  subjectGroups: string[];           // labels only — reconciled with existing
   trackedParameters: {name: string; unit: string}[];
 }
 
 export interface AddLineInput {
   title: string;
   description: string;
+  duration: string;
   stageQuestions: string[];          // question texts
 }
 
@@ -34,7 +47,8 @@ export class ResearchService {
       title: input.title,
       hypothesis: input.hypothesis,
       description: input.description,
-      blindingType: 'SINGLE_BLIND',
+      status: 'DRAFT',
+      ethicsApprovalDocument: null,
       subjectGroups: input.subjectGroups.map(label => ({
         id: crypto.randomUUID(),
         label,
@@ -45,12 +59,54 @@ export class ResearchService {
         name: p.name,
         unit: p.unit,
       })),
+      protocol: {
+        id: crypto.randomUUID(),
+        ...input.protocol,
+      },
+      primaryOutcomes: input.primaryOutcomes.map(text => ({
+        id: crypto.randomUUID(),
+        text,
+        status: 'DRAFT' as const,
+      })),
       lines: [],
+      report: null,
       createdAt: new Date().toISOString(),
     };
     this._projects.update(list => [...list, project]);
     this.persist();
     return project;
+  }
+
+  updateResearch(id: string, input: UpdateResearchInput) {
+    this.updateProject(id, p => ({
+      ...p,
+      title: input.title,
+      hypothesis: input.hypothesis,
+      description: input.description,
+      protocol: {
+        ...p.protocol,
+        ...input.protocol,
+      },
+      primaryOutcomes: input.primaryOutcomes.map(text => {
+        const existing = p.primaryOutcomes.find(o => o.text === text);
+        return existing ?? {id: crypto.randomUUID(), text, status: 'DRAFT' as const};
+      }),
+      subjectGroups: input.subjectGroups.map(label => {
+        const existing = p.subjectGroups.find(g => g.label === label);
+        return existing ?? {id: crypto.randomUUID(), label, subjects: []};
+      }),
+      trackedParameters: input.trackedParameters.map(tp => {
+        const existing = p.trackedParameters.find(t => t.name === tp.name && t.unit === tp.unit);
+        return existing ?? {id: crypto.randomUUID(), name: tp.name, unit: tp.unit};
+      }),
+    }));
+  }
+
+  submitForReview(id: string) {
+    this.updateProject(id, p => ({
+      ...p,
+      status: 'PENDING_REVIEW',
+    }));
   }
 
   deleteResearch(id: string) {
@@ -66,6 +122,7 @@ export class ResearchService {
       sequenceOrder: (this.getById(projectId)?.lines.length ?? 0) + 1,
       title: input.title,
       description: input.description,
+      duration: input.duration,
       status: 'LOCKED',
       stageQuestions: input.stageQuestions.map(text => ({
         id: crypto.randomUUID(),
