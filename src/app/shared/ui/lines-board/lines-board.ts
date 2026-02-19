@@ -1,9 +1,13 @@
-import {Component, model, signal} from '@angular/core';
+import {Component, input, model, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
+import {TaskModal} from '../task-modal/task-modal';
+import {LogEntry, Artifact} from '../../../core/models/research.model';
 
 export interface TaskDraft {
   title: string;
   description: string;
+  logEntries: LogEntry[];
+  artifacts: Artifact[];
 }
 
 export interface LineDraft {
@@ -19,11 +23,14 @@ type ModalType = 'none' | 'editLine' | 'objectives' | 'editTask';
   standalone: true,
   selector: 'rf-lines-board',
   templateUrl: './lines-board.html',
-  imports: [FormsModule],
+  imports: [FormsModule, TaskModal],
 })
 export class LinesBoard {
   /** Two-way bound lines data — parent owns the source of truth */
   lines = model.required<LineDraft[]>();
+
+  /** When true, the board and all modals are read-only */
+  readonly = input(false);
 
   // ── Modal state ──
   modal = signal<ModalType>('none');
@@ -34,8 +41,6 @@ export class LinesBoard {
   editLineTitle = '';
   editLineDescription = '';
   newObjectiveText = '';
-  editTaskTitle = '';
-  editTaskDescription = '';
   newTaskTitle = '';
 
   // ════════════════ Lines (columns) ════════════════
@@ -107,17 +112,21 @@ export class LinesBoard {
   // ════════════════ Tasks ════════════════
 
   addTask(lineIndex: number) {
+    if (this.readonly()) return;
     const text = this.newTaskTitle.trim();
     if (!text) return;
     this.lines.update(list =>
       list.map((l, idx) =>
-        idx === lineIndex ? {...l, tasks: [...l.tasks, {title: text, description: ''}]} : l
+        idx === lineIndex
+          ? {...l, tasks: [...l.tasks, {title: text, description: '', logEntries: [], artifacts: []}]}
+          : l
       )
     );
     this.newTaskTitle = '';
   }
 
   removeTask(lineIndex: number, taskIndex: number) {
+    if (this.readonly()) return;
     this.lines.update(list =>
       list.map((l, idx) =>
         idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
@@ -129,32 +138,33 @@ export class LinesBoard {
   // ════════════════ Modal: Edit Task ════════════════
 
   openEditTask(lineIndex: number, taskIndex: number) {
-    const task = this.lines()[lineIndex].tasks[taskIndex];
     this.activeLineIndex.set(lineIndex);
     this.activeTaskIndex.set(taskIndex);
-    this.editTaskTitle = task.title;
-    this.editTaskDescription = task.description;
     this.modal.set('editTask');
   }
 
-  saveEditTask() {
+  activeTask(): TaskDraft | null {
+    const li = this.activeLineIndex();
+    const ti = this.activeTaskIndex();
+    if (li < 0 || ti < 0) return null;
+    return this.lines()[li]?.tasks[ti] ?? null;
+  }
+
+  onTaskSave(updated: TaskDraft) {
     const li = this.activeLineIndex();
     const ti = this.activeTaskIndex();
     this.lines.update(list =>
       list.map((l, idx) =>
         idx === li
-          ? {
-              ...l,
-              tasks: l.tasks.map((t, j) =>
-                j === ti
-                  ? {title: this.editTaskTitle.trim() || t.title, description: this.editTaskDescription}
-                  : t
-              ),
-            }
+          ? {...l, tasks: l.tasks.map((t, j) => (j === ti ? updated : t))}
           : l
       )
     );
     this.closeModal();
+  }
+
+  onTaskDelete() {
+    this.removeTask(this.activeLineIndex(), this.activeTaskIndex());
   }
 
   // ════════════════ Helpers ════════════════
