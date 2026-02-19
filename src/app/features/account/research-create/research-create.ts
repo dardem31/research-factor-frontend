@@ -10,9 +10,20 @@ interface ParamDraft {
   unit: string;
 }
 
+interface SubjectDraft {
+  code: string;
+  remarks: string;
+  kycVerified: boolean;
+  parameterValues: {parameterId: string; value: number}[];
+}
+
 interface GroupDraft {
   label: string;
+  description: string;
+  subjects: SubjectDraft[];
 }
+
+type Step3Modal = 'none' | 'editGroup' | 'editSubject';
 
 @Component({
   standalone: true,
@@ -69,6 +80,21 @@ export default class ResearchCreatePage implements OnInit {
   // Step 3 — subject groups (optional)
   subjectGroups = signal<GroupDraft[]>([]);
   newGroupLabel = '';
+  newGroupDescription = '';
+
+  // Step 3 — modals
+  step3Modal = signal<Step3Modal>('none');
+  editingGroupIndex = signal(-1);
+  editGroupLabel = '';
+  editGroupDescription = '';
+
+  editingSubjectGroupIndex = signal(-1);
+  editingSubjectIndex = signal(-1);
+  editSubjectCode = '';
+  editSubjectRemarks = '';
+  editSubjectKycVerified = false;
+  editSubjectParams = signal<{parameterId: string; name: string; unit: string; value: number}[]>([]);
+  kycCopied = signal(false);
 
   // Computed progress
   totalStageQuestions = computed(() =>
@@ -128,7 +154,16 @@ export default class ResearchCreatePage implements OnInit {
     })));
 
     // Subject groups
-    this.subjectGroups.set(p.subjectGroups.map(g => ({label: g.label})));
+    this.subjectGroups.set(p.subjectGroups.map(g => ({
+      label: g.label,
+      description: g.description,
+      subjects: g.subjects.map(s => ({
+        code: s.code,
+        remarks: s.remarks,
+        kycVerified: s.kycVerified,
+        parameterValues: s.parameterFields.map(pf => ({parameterId: pf.parameterId, value: pf.currentValue})),
+      })),
+    })));
   }
 
   // ════════════════ Navigation ════════════════
@@ -163,12 +198,117 @@ export default class ResearchCreatePage implements OnInit {
   addGroup() {
     const label = this.newGroupLabel.trim();
     if (!label) return;
-    this.subjectGroups.update(g => [...g, {label}]);
+    this.subjectGroups.update(g => [...g, {label, description: this.newGroupDescription.trim(), subjects: []}]);
     this.newGroupLabel = '';
+    this.newGroupDescription = '';
   }
 
   removeGroup(i: number) {
     this.subjectGroups.update(g => g.filter((_, idx) => idx !== i));
+  }
+
+  openEditGroup(i: number) {
+    const g = this.subjectGroups()[i];
+    this.editingGroupIndex.set(i);
+    this.editGroupLabel = g.label;
+    this.editGroupDescription = g.description;
+    this.step3Modal.set('editGroup');
+  }
+
+  saveEditGroup() {
+    const i = this.editingGroupIndex();
+    this.subjectGroups.update(list =>
+      list.map((g, idx) => idx === i
+        ? {...g, label: this.editGroupLabel.trim() || g.label, description: this.editGroupDescription}
+        : g
+      )
+    );
+    this.closeStep3Modal();
+  }
+
+  // ════════════════ Subjects ════════════════
+
+  openAddSubject(groupIndex: number) {
+    this.editingSubjectGroupIndex.set(groupIndex);
+    this.editingSubjectIndex.set(-1);
+    this.editSubjectCode = 'SUB-' + String(this.totalSubjects() + 1).padStart(4, '0');
+    this.editSubjectRemarks = '';
+    this.editSubjectKycVerified = false;
+    this.editSubjectParams.set(
+      this.trackedParameters().map(p => ({parameterId: '', name: p.name, unit: p.unit, value: 0}))
+    );
+    this.step3Modal.set('editSubject');
+  }
+
+  openEditSubject(groupIndex: number, subjectIndex: number) {
+    const s = this.subjectGroups()[groupIndex].subjects[subjectIndex];
+    this.editingSubjectGroupIndex.set(groupIndex);
+    this.editingSubjectIndex.set(subjectIndex);
+    this.editSubjectCode = s.code;
+    this.editSubjectRemarks = s.remarks;
+    this.editSubjectKycVerified = s.kycVerified;
+    this.editSubjectParams.set(
+      this.trackedParameters().map(p => {
+        const existing = s.parameterValues.find(pv => pv.parameterId === p.name);
+        return {parameterId: p.name, name: p.name, unit: p.unit, value: existing?.value ?? 0};
+      })
+    );
+    this.step3Modal.set('editSubject');
+  }
+
+  saveSubject() {
+    const gi = this.editingSubjectGroupIndex();
+    const si = this.editingSubjectIndex();
+    const draft: SubjectDraft = {
+      code: this.editSubjectCode.trim(),
+      remarks: this.editSubjectRemarks.trim(),
+      kycVerified: this.editSubjectKycVerified,
+      parameterValues: this.editSubjectParams().map(p => ({parameterId: p.name, value: p.value})),
+    };
+    this.subjectGroups.update(list =>
+      list.map((g, idx) => {
+        if (idx !== gi) return g;
+        const subjects = [...g.subjects];
+        if (si >= 0) {
+          subjects[si] = draft;
+        } else {
+          subjects.push(draft);
+        }
+        return {...g, subjects};
+      })
+    );
+    this.closeStep3Modal();
+  }
+
+  removeSubject(groupIndex: number, subjectIndex: number) {
+    this.subjectGroups.update(list =>
+      list.map((g, idx) => idx === groupIndex
+        ? {...g, subjects: g.subjects.filter((_, j) => j !== subjectIndex)}
+        : g
+      )
+    );
+  }
+
+  copyKycLink() {
+    const code = this.editSubjectCode.trim();
+    const link = `${window.location.origin}/kyc/${code}`;
+    navigator.clipboard.writeText(link);
+    this.kycCopied.set(true);
+    setTimeout(() => this.kycCopied.set(false), 2000);
+  }
+
+  totalSubjects = computed(() =>
+    this.subjectGroups().reduce((sum, g) => sum + g.subjects.length, 0)
+  );
+
+  updateParamValue(index: number, value: number) {
+    this.editSubjectParams.update(list =>
+      list.map((p, i) => i === index ? {...p, value} : p)
+    );
+  }
+
+  closeStep3Modal() {
+    this.step3Modal.set('none');
   }
 
   // ════════════════ Primary outcomes ════════════════
@@ -226,9 +366,16 @@ export default class ResearchCreatePage implements OnInit {
         description: this.description.trim(),
         protocol: this.buildProtocolInput(),
         primaryOutcomes: this.primaryOutcomes(),
-        subjectGroups: this.subjectGroups().map(g => g.label),
-        trackedParameters: this.trackedParameters(),
-      });
+              subjectGroups: this.subjectGroups().map(g => ({
+        label: g.label,
+        description: g.description,
+        subjects: g.subjects.map(s => ({
+          code: s.code, remarks: s.remarks, kycVerified: s.kycVerified,
+          parameterValues: s.parameterValues,
+        })),
+      })),
+      trackedParameters: this.trackedParameters(),
+    });
 
       // Reconcile lines: remove old, re-add from drafts
       const existing = this.researchService.getById(id)!;
@@ -255,10 +402,17 @@ export default class ResearchCreatePage implements OnInit {
         hypothesis: this.hypothesis.trim(),
         description: this.description.trim(),
         protocol: this.buildProtocolInput(),
-        primaryOutcomes: this.primaryOutcomes(),
-        subjectGroups: this.subjectGroups().map(g => g.label),
-        trackedParameters: this.trackedParameters(),
-      });
+              primaryOutcomes: this.primaryOutcomes(),
+      subjectGroups: this.subjectGroups().map(g => ({
+        label: g.label,
+        description: g.description,
+        subjects: g.subjects.map(s => ({
+          code: s.code, remarks: s.remarks, kycVerified: s.kycVerified,
+          parameterValues: s.parameterValues,
+        })),
+      })),
+      trackedParameters: this.trackedParameters(),
+    });
 
       for (const lineDraft of this.lines()) {
         const line = this.researchService.addLine(project.id, {

@@ -56,8 +56,10 @@ export type PrimaryOutcomeStatus = 'DRAFT' | 'APPROVED';
 export interface SubjectGroup {
   id: string;
   label: string;
+  description: string;
   subjects: Subject[];
 }
+
 
 // ════════════════════════════════════════════
 // E. Subject
@@ -66,6 +68,8 @@ export interface SubjectGroup {
 export interface Subject {
   id: string;
   code: string;
+  remarks: string;
+  kycVerified: boolean;
   groupId: string;
   parameterFields: ParameterField[];
 }

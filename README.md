@@ -48,12 +48,14 @@ A pre-defined research-level question that the ResearchReport must answer. Immut
 A named group that subjects are randomized into.
 - `id`: UUID
 - `label`: String (e.g., "Group A — Experimental", "Group B — Control")
+- `description`: String
 - `subjects`: Subject[]
 
 ### E. Subject
 A registered participant in the research.
 - `id`: UUID
 - `code`: String (Platform-assigned anonymous code, e.g., "SUB-0042")
+- `remarks`: String
 - `group`: SubjectGroup (Assigned by platform randomization — seed recorded in audit trail)
 - `parameterFields`: ParameterField[] (Current values of each TrackedParameter for this subject)
 - `logs`: LogEntry[] (All log entries where this subject was @mentioned)

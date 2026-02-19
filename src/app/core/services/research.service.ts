@@ -3,13 +3,26 @@ import {
   Research, ResearchLine, ResearchTask, StudyProtocol,
 } from '../models/research.model';
 
+export interface SubjectGroupInput {
+  label: string;
+  description: string;
+  subjects: SubjectInput[];
+}
+
+export interface SubjectInput {
+  code: string;
+  remarks: string;
+  kycVerified: boolean;
+  parameterValues: {parameterId: string; value: number}[];
+}
+
 export interface CreateResearchInput {
   title: string;
   hypothesis: string;
   description: string;
   protocol: Omit<StudyProtocol, 'id'>;
-  primaryOutcomes: string[];         // question texts
-  subjectGroups: string[];           // labels only
+  primaryOutcomes: string[];
+  subjectGroups: SubjectGroupInput[];
   trackedParameters: {name: string; unit: string}[];
 }
 
@@ -18,8 +31,8 @@ export interface UpdateResearchInput {
   hypothesis: string;
   description: string;
   protocol: Omit<StudyProtocol, 'id'>;
-  primaryOutcomes: string[];         // full list — reconciled with existing
-  subjectGroups: string[];           // labels only — reconciled with existing
+  primaryOutcomes: string[];
+  subjectGroups: SubjectGroupInput[];
   trackedParameters: {name: string; unit: string}[];
 }
 
@@ -49,10 +62,23 @@ export class ResearchService {
       description: input.description,
       status: 'DRAFT',
       ethicsApprovalDocument: null,
-      subjectGroups: input.subjectGroups.map(label => ({
+      subjectGroups: input.subjectGroups.map(g => ({
         id: crypto.randomUUID(),
-        label,
-        subjects: [],
+        label: g.label,
+        description: g.description,
+        subjects: g.subjects.map(s => ({
+          id: crypto.randomUUID(),
+          code: s.code,
+          remarks: s.remarks,
+          kycVerified: s.kycVerified,
+          groupId: '',  // will be set below
+          parameterFields: s.parameterValues.map(pv => ({
+            id: crypto.randomUUID(),
+            parameterId: pv.parameterId,
+            currentValue: pv.value,
+            updatedAt: new Date().toISOString(),
+          })),
+        })),
       })),
       trackedParameters: input.trackedParameters.map(p => ({
         id: crypto.randomUUID(),
@@ -91,9 +117,32 @@ export class ResearchService {
         const existing = p.primaryOutcomes.find(o => o.text === text);
         return existing ?? {id: crypto.randomUUID(), text, status: 'DRAFT' as const};
       }),
-      subjectGroups: input.subjectGroups.map(label => {
-        const existing = p.subjectGroups.find(g => g.label === label);
-        return existing ?? {id: crypto.randomUUID(), label, subjects: []};
+      subjectGroups: input.subjectGroups.map(gi => {
+        const existing = p.subjectGroups.find(g => g.label === gi.label);
+        if (existing) {
+          return {
+            ...existing,
+            description: gi.description,
+            subjects: gi.subjects.map(si => {
+              const existingSubject = existing.subjects.find(s => s.code === si.code);
+              return existingSubject
+                ? {...existingSubject, remarks: si.remarks, kycVerified: si.kycVerified,
+                    parameterFields: si.parameterValues.map(pv => {
+                      const ef = existingSubject.parameterFields.find(f => f.parameterId === pv.parameterId);
+                      return ef ? {...ef, currentValue: pv.value} : {id: crypto.randomUUID(), parameterId: pv.parameterId, currentValue: pv.value, updatedAt: new Date().toISOString()};
+                    })}
+                : {id: crypto.randomUUID(), code: si.code, remarks: si.remarks, kycVerified: si.kycVerified, groupId: existing.id,
+                    parameterFields: si.parameterValues.map(pv => ({id: crypto.randomUUID(), parameterId: pv.parameterId, currentValue: pv.value, updatedAt: new Date().toISOString()}))};
+            }),
+          };
+        }
+        return {
+          id: crypto.randomUUID(), label: gi.label, description: gi.description,
+          subjects: gi.subjects.map(si => ({
+            id: crypto.randomUUID(), code: si.code, remarks: si.remarks, kycVerified: si.kycVerified, groupId: '',
+            parameterFields: si.parameterValues.map(pv => ({id: crypto.randomUUID(), parameterId: pv.parameterId, currentValue: pv.value, updatedAt: new Date().toISOString()})),
+          })),
+        };
       }),
       trackedParameters: input.trackedParameters.map(tp => {
         const existing = p.trackedParameters.find(t => t.name === tp.name && t.unit === tp.unit);
