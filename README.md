@@ -10,7 +10,7 @@ This version focuses on **Research Definition** and **Execution** only (Review a
 
 ## 1. Domain Entities (Core Hierarchy)
 
-### A. Study (Research Project)
+### A. Research
 The top-level container for a scientific goal.
 - `id`: UUID
 - `title`: String
@@ -21,7 +21,8 @@ The top-level container for a scientific goal.
 - `subjectGroups`: SubjectGroup[]
 - `trackedParameters`: TrackedParameter[] (Global list of measured metrics across all subjects)
 - `lines`: ResearchLine[] (Ordered)
-
+  да - только не надо обновлять все readme
+  дай только обновленную сущность Research и StudyProtocol
 ### B. SubjectGroup
 A named group that subjects are randomized into.
 - `id`: UUID
@@ -29,7 +30,7 @@ A named group that subjects are randomized into.
 - `subjects`: Subject[]
 
 ### C. Subject
-A registered participant in the study.
+A registered participant in the Research.
 - `id`: UUID
 - `code`: String (Platform-assigned anonymous code, e.g., "SUB-0042")
 - `group`: SubjectGroup (Assigned by platform randomization — seed recorded in audit trail)
@@ -44,7 +45,7 @@ The current state of a single TrackedParameter for a specific Subject.
 - `updatedAt`: Timestamp (Backend-generated on each update)
 
 ### E. TrackedParameter
-A measurable metric monitored across all subjects throughout the study.
+A measurable metric monitored across all subjects throughout the Research.
 - `id`: UUID
 - `name`: String (e.g., "Fasting glucose", "Body weight", "Sleep score")
 - `unit`: String (e.g., "mmol/L", "kg", "points")
@@ -69,8 +70,7 @@ A pre-defined question formulated before the phase begins that the Objective mus
 A granular entry in the lab journal.
 - `id`: UUID
 - `title`: String
-- `type`: `ONGOING | ONE_TIME` (Ongoing = continuous monitoring, One-time = discrete event e.g. blood draw)
-- `status`: `DRAFT | SUBMITTED`
+- `done`: Boolean
 - `logEntries`: LogEntry[]
 - `artifacts`: Artifact[]
 
@@ -158,15 +158,15 @@ PhD reviewer's assessment of a submitted Objective.
 ## 3. Workflow
 
 ### Flow 1: Construction (Setup)
-- Create `Study` → define hypothesis, subject groups, tracked parameters
+- Create `Research` → define hypothesis, subject groups, tracked parameters
 - Add `ResearchLine` items in sequence order
 - For each `ResearchLine`: define `StageQuestions`
 - Define `ResearchTask` set for each `ResearchLine`
 - All data is editable in this phase
-- Attach ethics approval document (required before Study can be submitted for review)
+- Attach ethics approval document (required before Research can be submitted for review)
 
 ### Flow 2: Subject Registration & Randomization
-- Subjects register on the platform and apply to the Study
+- Subjects register on the platform and apply to the Research
 - Platform performs randomization → assigns each Subject a code and a group
 - Randomization seed recorded in audit trail
 - Researcher sees subject codes only (group mapping visible after unblinding)
