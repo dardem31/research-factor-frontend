@@ -18,12 +18,12 @@ The top-level container for a scientific goal.
 - `description`: Markdown
 - `blindingType`: `SINGLE_BLIND` (default, locked for now)
 - `ethicsApprovalDocument`: Artifact (Required before activation)
-- `subjectGroups`: SubjectGroup[] (Exactly 2: experimental + control)
+- `subjectGroups`: SubjectGroup[]
 - `trackedParameters`: TrackedParameter[] (Global list of measured metrics across all subjects)
 - `lines`: ResearchLine[] (Ordered)
 
 ### B. SubjectGroup
-One of two groups subjects are randomized into.
+A named group that subjects are randomized into.
 - `id`: UUID
 - `label`: String (e.g., "Group A — Experimental", "Group B — Control")
 - `subjects`: Subject[]
@@ -33,84 +33,102 @@ A registered participant in the study.
 - `id`: UUID
 - `code`: String (Platform-assigned anonymous code, e.g., "SUB-0042")
 - `group`: SubjectGroup (Assigned by platform randomization — seed recorded in audit trail)
-- `parameterReadings`: ParameterReading[] (Time-series values for each TrackedParameter)
+- `parameterFields`: ParameterField[] (Current values of each TrackedParameter for this subject)
+- `logs`: LogEntry[] (All log entries where this subject was @mentioned)
 
-### D. TrackedParameter
+### D. ParameterField
+The current state of a single TrackedParameter for a specific Subject.
+- `id`: UUID
+- `parameter`: TrackedParameter
+- `currentValue`: Decimal
+- `updatedAt`: Timestamp (Backend-generated on each update)
+
+### E. TrackedParameter
 A measurable metric monitored across all subjects throughout the study.
 - `id`: UUID
 - `name`: String (e.g., "Fasting glucose", "Body weight", "Sleep score")
 - `unit`: String (e.g., "mmol/L", "kg", "points")
 
-### E. ResearchLine (Phase)
+### F. ResearchLine (Phase)
 A major block of work representing a specific experimental phase.
 - `id`: UUID
 - `sequenceOrder`: Integer (Determines execution flow)
 - `title`: String (e.g., "Baseline measurement", "Intervention phase")
 - `status`: `LOCKED | ACTIVE | COMPLETED`
 - `stageQuestions`: StageQuestion[] (Pre-defined questions this phase must answer — immutable once approved)
-- `objectives`: Objective[] (Expected outcomes for this line — immutable once ResearchLine starts)
 - `tasks`: ResearchTask[]
-- `report`: ResearchLineReport (Submitted by researcher to close the phase)
+- `objective`: Objective (Submitted by researcher to close the phase)
 
-### F. StageQuestion
-A pre-defined question formulated before the phase begins that the ResearchLineReport must answer.
+### G. StageQuestion
+A pre-defined question formulated before the phase begins that the Objective must answer.
 - `id`: UUID
 - `text`: String (e.g., "Is there a statistically significant difference in fasting glucose between Group A and Group B?")
 - `status`: `DRAFT | APPROVED` (Frozen after PhD approval — cannot be modified)
 
-### G. Objective
-Pre-defined success criteria. Immutable once the ResearchLine starts.
-- `id`: UUID
-- `description`: String (e.g., "Glucose reduction > 10% vs baseline")
-- `status`: `PENDING | FULFILLED | FAILED`
-
 ### H. ResearchTask (The "Action")
 A granular entry in the lab journal.
 - `id`: UUID
+- `title`: String
 - `type`: `ONGOING | ONE_TIME` (Ongoing = continuous monitoring, One-time = discrete event e.g. blood draw)
 - `status`: `DRAFT | SUBMITTED`
-- `logEntries`: LogEntry[] (Real-time notes with immutable timestamps)
+- `logEntries`: LogEntry[]
 - `artifacts`: Artifact[]
-- `subjectRefs`: Subject[] (Optional — which subjects this task relates to)
 
-### I. ResearchLineReport
-Submitted by the researcher to close a ResearchLine and trigger PhD review.
+### I. LogEntry
+An immutable timestamped note within a ResearchTask. May include @mentions of subjects and corresponding parameter updates.
+- `id`: UUID
+- `text`: String (Supports @mention of Subject codes)
+- `subjectUpdates`: SubjectUpdate[] (Captured when a subject is @mentioned — stores parameter changes at the time of this log entry)
+- `artifacts`: Artifact[]
+- `createdAt`: Timestamp (Backend-generated, immutable)
+
+### J. SubjectUpdate
+A snapshot of parameter changes for a specific Subject, captured within a LogEntry at the moment of @mention.
+- `id`: UUID
+- `subject`: Subject
+- `parameterChanges`: ParameterChange[] (Which parameters changed and to what value)
+
+### K. ParameterChange
+A single parameter value recorded as part of a SubjectUpdate.
+- `id`: UUID
+- `parameter`: TrackedParameter
+- `previousValue`: Decimal
+- `newValue`: Decimal
+
+### L. Objective
+Submitted by the researcher to close a ResearchLine. Triggers PhD review.
 - `id`: UUID
 - `summary`: String (Brief plain-language summary of what happened in this phase)
 - `narrative`: Markdown (Full interpretation with inline references to specific tasks and log entries)
 - `stageQuestionAnswers`: StageQuestionAnswer[] (Mandatory answer for each StageQuestion)
-- `protocolDeviations`: String (Free text — required field, researcher must explicitly state "None" if applicable)
-- `adverseEvents`: String (Free text — required field, researcher must explicitly state "None" if applicable)
-- `nextPhaseRecommendation`: String (Optional — researcher's recommendation for the next ResearchLine)
+- `protocolDeviations`: String (Required — researcher must explicitly state "None" if applicable)
+- `adverseEvents`: String (Required — researcher must explicitly state "None" if applicable)
+- `nextPhaseRecommendation`: String (Optional)
+- `status`: `PENDING | FULFILLED | FAILED`
 - `submittedAt`: Timestamp (Backend-generated)
+- `review`: ObjectiveReview
 
-### J. StageQuestionAnswer
+### M. StageQuestionAnswer
 Researcher's explicit answer to a pre-defined StageQuestion.
 - `id`: UUID
 - `stageQuestion`: StageQuestion
 - `answer`: Markdown (Researcher's response with optional inline references)
 
-### K. Artifact (The "Evidence")
+### N. ObjectiveReview
+PhD reviewer's assessment of a submitted Objective.
+- `id`: UUID
+- `objective`: Objective
+- `reviewer`: User (LEAD_PHD)
+- `verdict`: `APPROVED | REJECTED | REVISION_REQUESTED`
+- `comment`: Markdown
+- `createdAt`: Timestamp (Backend-generated)
+
+### O. Artifact (The "Evidence")
 - `id`: UUID
 - `type`: `RAW_DATA | PHOTO | CODE | CONFIG | ETHICS_APPROVAL | LAB_RESULT`
 - `storageUrl`: String
 - `sha256`: String (File integrity)
 - `metadata`: Map<String, String> (Device IDs, environment specs, etc.)
-
-### L. LogEntry
-An immutable timestamped note within a ResearchTask. May include a ParameterReading.
-- `id`: UUID
-- `text`: String
-- `parameterReading`: ParameterReading (Optional — links a measurement to this log entry)
-- `createdAt`: Timestamp (Backend-generated, immutable)
-
-### M. ParameterReading
-A single measurement of a TrackedParameter for a specific Subject at a point in time.
-- `id`: UUID
-- `subject`: Subject
-- `parameter`: TrackedParameter
-- `value`: Decimal
-- `recordedAt`: Timestamp
 
 ---
 
@@ -125,7 +143,7 @@ A single measurement of a TrackedParameter for a specific Subject at a point in 
 1. **StageQuestions Frozen:** Once a `StageQuestion` has `status: APPROVED` it cannot be modified or deleted.
 2. **ResearchLine Locked:** Once a line has `status: COMPLETED`, no `ResearchTask` can be added or modified.
 3. **Task Submission:** Once a `ResearchTask` is `SUBMITTED`, all its `logEntries` and `artifacts` become `ReadOnly`.
-4. **Timestamp Integrity:** `LogEntry` and `ParameterReading` timestamps must be generated by the backend; frontend displays them in local time.
+4. **Timestamp Integrity:** `LogEntry` and `ParameterField` timestamps must be generated by the backend; frontend displays them in local time.
 5. **Randomization Seed:** Subject-to-group assignment is performed by the platform; the seed is written to the audit trail at assignment time and is immutable.
 
 ### Stack
@@ -142,7 +160,7 @@ A single measurement of a TrackedParameter for a specific Subject at a point in 
 ### Flow 1: Construction (Setup)
 - Create `Study` → define hypothesis, subject groups, tracked parameters
 - Add `ResearchLine` items in sequence order
-- For each `ResearchLine`: define `StageQuestions` and `Objectives`
+- For each `ResearchLine`: define `StageQuestions`
 - Define `ResearchTask` set for each `ResearchLine`
 - All data is editable in this phase
 - Attach ethics approval document (required before Study can be submitted for review)
@@ -155,24 +173,33 @@ A single measurement of a TrackedParameter for a specific Subject at a point in 
 
 ### Flow 3: Laboratory Work (Execution)
 - Set `ResearchLine` to `ACTIVE`
-- Add `LogEntries` to `ResearchTask` as work progresses (optionally attach `ParameterReading`)
-- Upload `Artifacts` and link them to the task
+- Add `LogEntries` to `ResearchTask` as work progresses
+- @mention a subject in a log entry → UI presents parameter update form → changes saved as `SubjectUpdate` inside the `LogEntry` → `ParameterField` values on the Subject profile updated accordingly
+- Upload `Artifacts` and link them to the task or directly to a log entry
 - Final action per task: `SUBMIT_TASK`
 
-### Flow 4: Phase Completion & Report Submission
-- Researcher fills out `ResearchLineReport`:
+### Flow 4: Phase Completion — Objective Submission
+- Researcher fills out `Objective`:
     - Writes summary and narrative
     - Answers every `StageQuestion`
     - Declares protocol deviations and adverse events
 - `ResearchLine` can be marked `COMPLETED` only if:
-    - All `Objectives` have a status set
     - All `ResearchTask` items are `SUBMITTED`
     - All `StageQuestions` have answers
-    - `protocolDeviations` and `adverseEvents` fields are filled
-- Submission triggers PhD review of the phase
+    - `protocolDeviations` and `adverseEvents` fields are explicitly filled
+- Submission sets `Objective.status` to `PENDING` and triggers PhD review
 
-### Flow 5: Progress Tracking
-- Per-phase graphs of `TrackedParameter` values aggregated by `SubjectGroup`
+### Flow 5: PhD Review
+- `LEAD_PHD` reviews the `Objective` — reads summary, narrative, StageQuestion answers
+- `LEAD_PHD` has full read access to all `ResearchTask` content and graphs for this phase
+- `LEAD_PHD` submits `ObjectiveReview` with verdict:
+    - `APPROVED` → ResearchLine is marked `COMPLETED`, next line unlocks
+    - `REJECTED` → Objective.status set to `FAILED`
+    - `REVISION_REQUESTED` → Researcher receives feedback, may resubmit
+
+### Flow 6: Progress Tracking
+- Per-phase graphs of `ParameterField` current values aggregated by `SubjectGroup`
+- History reconstructable from `SubjectUpdate` records inside `LogEntry` items
 - Visible to Donors in real time
 - `computed` signals drive progress indicators in UI
 
@@ -182,5 +209,7 @@ A single measurement of a TrackedParameter for a specific Subject at a point in 
 - **Vertical Pipeline:** Display `ResearchLines` as a vertical progression
 - **Artifact Sidebar:** Context-aware panel showing files related to the selected `ResearchTask`
 - **Parameter Dashboard:** Per-ResearchLine graphs showing tracked parameter dynamics split by group
+- **Subject Profile Panel:** Shows current `ParameterField` values + full `logs` history for a subject
+- **@mention Flow:** Typing `@` in a `LogEntry` input triggers subject search → on selection, parameter update form slides in → saved as `SubjectUpdate`
 - **Mobile-Friendly Inputs:** Focus on `LogEntry` input and Camera Upload for mobile lab work
 - **No-Delete Policy:** Implement "Archive" or "Correction" logs instead of deleting entries to preserve audit trail
