@@ -49,6 +49,8 @@ export class TaskModal implements OnInit {
     {value: 'PHOTO', label: 'Photo'},
     {value: 'CODE', label: 'Code'},
     {value: 'CONFIG', label: 'Config'},
+    {value: 'ETHICS_APPROVAL', label: 'Ethics Approval'},
+    {value: 'LAB_RESULT', label: 'Lab Result'},
   ];
 
   ngOnInit() {
@@ -70,7 +72,9 @@ export class TaskModal implements OnInit {
       {
         id: crypto.randomUUID(),
         text,
-        timestamp: new Date().toISOString(),
+        subjectUpdates: [],
+        artifacts: [],
+        createdAt: new Date().toISOString(),
       },
     ];
     this.newLogText = '';
@@ -113,6 +117,8 @@ export class TaskModal implements OnInit {
       PHOTO: '📷',
       CODE: '💻',
       CONFIG: '⚙️',
+      ETHICS_APPROVAL: '📜',
+      LAB_RESULT: '🧪',
     };
     return map[type];
   }

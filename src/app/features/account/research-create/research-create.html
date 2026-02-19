@@ -1,17 +1,18 @@
 <div>
   <!-- Stepper -->
-  <div class="mx-auto mb-8 flex max-w-3xl items-center gap-2 text-sm font-medium">
-    @for (s of [{n: 1, label: 'Проект'}, {n: 2, label: 'Research Lines'}, {n: 3, label: 'Обзор'}]; track s.n) {
+  <div class="mx-auto mb-8 flex max-w-4xl items-center gap-2 text-sm font-medium">
+    @for (s of steps; track s.n) {
       <div class="flex items-center gap-2">
-        <div
-          class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-          [class]="step() >= s.n ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'"
+        <button
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition"
+          [class]="step() >= s.n ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'"
+          (click)="goToStep(s.n)"
         >
           {{ s.n }}
-        </div>
+        </button>
         <span [class]="step() >= s.n ? 'text-gray-900' : 'text-gray-400'">{{ s.label }}</span>
       </div>
-      @if (s.n < 3) {
+      @if (s.n < 4) {
         <div class="h-px flex-1" [class]="step() > s.n ? 'bg-indigo-600' : 'bg-gray-200'"></div>
       }
     }
@@ -20,36 +21,84 @@
   <!-- ═══════ STEP 1: Project Info ═══════ -->
   @if (step() === 1) {
     <div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 class="text-xl font-bold text-gray-900">Новый проект</h2>
-      <p class="mt-1 text-sm text-gray-500">Укажите название и описание исследования.</p>
+      <h2 class="text-xl font-bold text-gray-900">Новое исследование</h2>
+      <p class="mt-1 text-sm text-gray-500">Основная информация, гипотеза и отслеживаемые параметры.</p>
 
-      <div class="mt-6 space-y-4">
+      <div class="mt-6 space-y-5">
+        <!-- Title -->
         <div>
-          <label class="block text-sm font-medium text-gray-700" for="title">Название *</label>
+          <label class="block text-sm font-medium text-gray-700">Название *</label>
           <input
-            id="title"
             type="text"
             class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-            placeholder="Например: Исследование свойств нового полимера"
+            placeholder="Effect of Supplement X on Fasting Glucose in Healthy Adults"
             [(ngModel)]="title"
           />
         </div>
+
+        <!-- Hypothesis -->
         <div>
-          <label class="block text-sm font-medium text-gray-700" for="desc">Описание</label>
+          <label class="block text-sm font-medium text-gray-700">Гипотеза *</label>
           <textarea
-            id="desc"
-            rows="4"
+            rows="2"
             class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-            placeholder="Краткое описание цели исследования..."
+            placeholder="Supplement X reduces fasting glucose by ≥10% compared to placebo over 8 weeks"
+            [(ngModel)]="hypothesis"
+          ></textarea>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Описание</label>
+          <textarea
+            rows="3"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            placeholder="Подробное описание исследования..."
             [(ngModel)]="description"
           ></textarea>
+        </div>
+
+        <!-- Tracked Parameters -->
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-semibold text-gray-800">Отслеживаемые параметры *</h3>
+          <p class="mt-0.5 text-xs text-gray-500">Метрики, измеряемые у всех испытуемых на протяжении исследования</p>
+          @if (trackedParameters().length > 0) {
+            <div class="mt-3 space-y-1.5">
+              @for (p of trackedParameters(); track $index; let i = $index) {
+                <div class="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-200">
+                  <span class="text-gray-800">{{ p.name }} <span class="text-gray-400">({{ p.unit }})</span></span>
+                  <button class="cursor-pointer text-xs text-gray-400 hover:text-red-500" (click)="removeParam(i)">×</button>
+                </div>
+              }
+            </div>
+          }
+          <div class="mt-3 flex gap-2">
+            <input
+              type="text"
+              class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              placeholder="Название, напр.: Fasting glucose"
+              [(ngModel)]="newParamName"
+            />
+            <input
+              type="text"
+              class="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              placeholder="Ед."
+              [(ngModel)]="newParamUnit"
+              (keydown.enter)="addParam()"
+            />
+            <button
+              class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+              [disabled]="!newParamName.trim() || !newParamUnit.trim()"
+              (click)="addParam()"
+            >+</button>
+          </div>
         </div>
       </div>
 
       <div class="mt-6 flex justify-end">
         <button
           class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:opacity-40"
-          [disabled]="!title.trim()"
+          [disabled]="!title.trim() || !hypothesis.trim() || trackedParameters().length === 0"
           (click)="nextToBoard()"
         >
           Далее →
@@ -58,7 +107,7 @@
     </div>
   }
 
-  <!-- ═══════ STEP 2: Board ═══════ -->
+  <!-- ═══════ STEP 2: Research Lines ═══════ -->
   @if (step() === 2) {
     <div>
       <rf-lines-board [(lines)]="lines" />
@@ -74,6 +123,66 @@
         <button
           class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:opacity-40"
           [disabled]="lines().length === 0"
+          (click)="nextToGroups()"
+        >
+          Далее →
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════ STEP 3: Subject Groups (Optional) ═══════ -->
+  @if (step() === 3) {
+    <div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900">Группы испытуемых</h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Опциональный шаг: вы можете предварительно создать группы для рандомизации или добавить испытуемых позже.
+      </p>
+
+      <div class="mt-6">
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-semibold text-gray-800">Группы</h3>
+          <p class="mt-0.5 text-xs text-gray-500">Напр.: «Group A — Experimental», «Group B — Control»</p>
+          
+          @if (subjectGroups().length > 0) {
+            <div class="mt-3 flex flex-wrap gap-2">
+              @for (g of subjectGroups(); track $index; let i = $index) {
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                  {{ g.label }}
+                  <button class="cursor-pointer text-indigo-400 hover:text-red-500" (click)="removeGroup(i)">×</button>
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="mt-3 text-sm italic text-gray-400">Группы не добавлены. Вы сможете добавить их позже.</p>
+          }
+
+          <div class="mt-3 flex gap-2">
+            <input
+              type="text"
+              class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              placeholder="Название группы..."
+              [(ngModel)]="newGroupLabel"
+              (keydown.enter)="addGroup()"
+            />
+            <button
+              class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+              [disabled]="!newGroupLabel.trim()"
+              (click)="addGroup()"
+            >+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-between">
+        <button
+          class="cursor-pointer rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+          (click)="back()"
+        >
+          ← Назад
+        </button>
+        <button
+          class="cursor-pointer rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-indigo-700"
           (click)="nextToReview()"
         >
           Далее →
@@ -82,55 +191,88 @@
     </div>
   }
 
-  <!-- ═══════ STEP 3: Review ═══════ -->
-  @if (step() === 3) {
+  <!-- ═══════ STEP 4: Review (Placeholder) ═══════ -->
+  @if (step() === 4) {
     <div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 class="text-xl font-bold text-gray-900">Обзор проекта</h2>
       <p class="mt-1 text-sm text-gray-500">Проверьте данные перед созданием.</p>
 
+      <!-- Summary Cards -->
       <div class="mt-6 space-y-4">
-        <div>
-          <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Название</span>
-          <p class="text-lg font-semibold text-gray-900">{{ title }}</p>
+        <!-- Project Info -->
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-semibold text-gray-800">Основная информация</h3>
+          <div class="mt-2 space-y-1 text-sm">
+            <p><span class="font-medium text-gray-700">Название:</span> {{ title }}</p>
+            <p><span class="font-medium text-gray-700">Гипотеза:</span> {{ hypothesis }}</p>
+            @if (description) {
+              <p><span class="font-medium text-gray-700">Описание:</span> {{ description }}</p>
+            }
+          </div>
         </div>
-        @if (description) {
-          <div>
-            <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Описание</span>
-            <p class="text-sm text-gray-700">{{ description }}</p>
+
+        <!-- Tracked Parameters -->
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-semibold text-gray-800">Отслеживаемые параметры ({{ trackedParameters().length }})</h3>
+          <div class="mt-2 flex flex-wrap gap-2">
+            @for (p of trackedParameters(); track $index) {
+              <span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                {{ p.name }} ({{ p.unit }})
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Research Lines -->
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 class="text-sm font-semibold text-gray-800">Research Lines ({{ lines().length }})</h3>
+          <div class="mt-2 space-y-2">
+            @for (line of lines(); track $index) {
+              <div class="rounded-md bg-white p-3 ring-1 ring-gray-200">
+                <p class="text-sm font-medium text-gray-800">{{ line.title }}</p>
+                <div class="mt-1 flex gap-3 text-xs text-gray-500">
+                  <span>Stage Questions: {{ line.stageQuestions.length }}</span>
+                  <span>Tasks: {{ line.tasks.length }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Subject Groups -->
+        @if (subjectGroups().length > 0) {
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h3 class="text-sm font-semibold text-gray-800">Группы испытуемых ({{ subjectGroups().length }})</h3>
+            <div class="mt-2 flex flex-wrap gap-2">
+              @for (g of subjectGroups(); track $index) {
+                <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                  {{ g.label }}
+                </span>
+              }
+            </div>
           </div>
         }
 
-        <div>
-          <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Research Lines ({{ lines().length }})</span>
-          <div class="mt-3 space-y-4">
-            @for (line of lines(); track $index; let i = $index) {
-              <div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                <h4 class="font-semibold text-gray-900">{{ i + 1 }}. {{ line.title }}</h4>
-                @if (line.description) {
-                  <p class="mt-1 text-xs text-gray-500">{{ line.description }}</p>
-                }
-                @if (line.objectives.length > 0) {
-                  <div class="mt-2">
-                    <span class="text-xs font-medium text-gray-500">Objectives:</span>
-                    <ul class="mt-1 space-y-0.5">
-                      @for (obj of line.objectives; track $index) {
-                        <li class="text-sm text-gray-600">🎯 {{ obj }}</li>
-                      }
-                    </ul>
-                  </div>
-                }
-                @if (line.tasks.length > 0) {
-                  <div class="mt-2">
-                    <span class="text-xs font-medium text-gray-500">Tasks:</span>
-                    <ol class="mt-1 space-y-0.5">
-                      @for (task of line.tasks; track $index; let k = $index) {
-                        <li class="text-sm text-gray-600">{{ k + 1 }}. {{ task.title }}</li>
-                      }
-                    </ol>
-                  </div>
-                }
-              </div>
-            }
+        <!-- Stats Summary -->
+        <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+          <h3 class="text-sm font-semibold text-indigo-900">Итого</h3>
+          <div class="mt-2 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+            <div>
+              <p class="text-xs text-indigo-600">Research Lines</p>
+              <p class="text-lg font-bold text-indigo-900">{{ lines().length }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-indigo-600">Stage Questions</p>
+              <p class="text-lg font-bold text-indigo-900">{{ totalStageQuestions() }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-indigo-600">Tasks</p>
+              <p class="text-lg font-bold text-indigo-900">{{ totalTasks() }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-indigo-600">Параметры</p>
+              <p class="text-lg font-bold text-indigo-900">{{ trackedParameters().length }}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ models:
     model: anthropic/claude-opus-4.6
     apiBase: https://openrouter.ai/api/v1
     apiKey: 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
+    timeout: 600000
 
   - name: qwen2.5-coder 1.5b
     provider: ollama

@@ -13,11 +13,11 @@ export interface TaskDraft {
 export interface LineDraft {
   title: string;
   description: string;
-  objectives: string[];
+  stageQuestions: string[];
   tasks: TaskDraft[];
 }
 
-type ModalType = 'none' | 'editLine' | 'objectives' | 'editTask';
+type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 
 @Component({
   standalone: true,
@@ -40,7 +40,7 @@ export class LinesBoard {
   // Temp form fields
   editLineTitle = '';
   editLineDescription = '';
-  newObjectiveText = '';
+  newQuestionText = '';
   newTaskTitle = '';
 
   // ════════════════ Lines (columns) ════════════════
@@ -48,7 +48,7 @@ export class LinesBoard {
   addLine() {
     this.lines.update(list => [
       ...list,
-      {title: 'Research Line ' + (list.length + 1), description: '', objectives: [], tasks: []},
+      {title: 'Research Line ' + (list.length + 1), description: '', stageQuestions: [], tasks: []},
     ]);
     this.openEditLine(this.lines().length - 1);
   }
@@ -80,31 +80,31 @@ export class LinesBoard {
     this.closeModal();
   }
 
-  // ════════════════ Modal: Objectives ════════════════
+  // ════════════════ Modal: Stage Questions ════════════════
 
-  openObjectives(lineIndex: number) {
+  openStageQuestions(lineIndex: number) {
     this.activeLineIndex.set(lineIndex);
-    this.newObjectiveText = '';
-    this.modal.set('objectives');
+    this.newQuestionText = '';
+    this.modal.set('stageQuestions');
   }
 
-  addObjective() {
-    const text = this.newObjectiveText.trim();
+  addStageQuestion() {
+    const text = this.newQuestionText.trim();
     if (!text) return;
     const i = this.activeLineIndex();
     this.lines.update(list =>
       list.map((l, idx) =>
-        idx === i ? {...l, objectives: [...l.objectives, text]} : l
+        idx === i ? {...l, stageQuestions: [...l.stageQuestions, text]} : l
       )
     );
-    this.newObjectiveText = '';
+    this.newQuestionText = '';
   }
 
-  removeObjective(objIndex: number) {
+  removeStageQuestion(qIndex: number) {
     const i = this.activeLineIndex();
     this.lines.update(list =>
       list.map((l, idx) =>
-        idx === i ? {...l, objectives: l.objectives.filter((_, j) => j !== objIndex)} : l
+        idx === i ? {...l, stageQuestions: l.stageQuestions.filter((_, j) => j !== qIndex)} : l
       )
     );
   }

@@ -13,11 +13,7 @@ export const ACCOUNT_ROUTES: Routes = [
       {
         path: 'new',
         loadComponent: () => import('./research-create/research-create'),
-      },
-      {
-        path: ':id',
-        loadComponent: () => import('./research-detail/research-detail'),
-      },
+      }
     ],
   },
 ];
