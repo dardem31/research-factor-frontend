@@ -12,11 +12,11 @@ export const ACCOUNT_ROUTES: Routes = [
       },
       {
         path: 'new',
-        loadComponent: () => import('./research-create/research-create'),
+        loadComponent: () => import('./research-detail/research-detail'),
       },
       {
         path: ':id/edit',
-        loadComponent: () => import('./research-create/research-create'),
+        loadComponent: () => import('./research-detail/research-detail'),
       }
     ],
   },

@@ -250,6 +250,9 @@
   <rf-task-modal
     [task]="task"
     [readonly]="readonly()"
+    [subjects]="subjects()"
+    [mentionableArtifacts]="mentionableArtifacts()"
+    [trackedParameters]="trackedParameters()"
     (save)="onTaskSave($event)"
     (delete)="onTaskDelete()"
     (close)="closeModal()"

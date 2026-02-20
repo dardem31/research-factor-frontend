@@ -148,6 +148,7 @@ export type TaskStatus = 'DRAFT' | 'SUBMITTED';
 export interface LogEntry {
   id: string;
   text: string;
+  subjects: Subject[];
   subjectUpdates: SubjectUpdate[];
   artifacts: Artifact[];
   createdAt: string;

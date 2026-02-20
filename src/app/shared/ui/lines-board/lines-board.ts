@@ -1,6 +1,6 @@
 import {Component, input, model, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {TaskModal} from '../task-modal/task-modal';
+import {TaskModal, MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../task-modal/task-modal';
 import {LogEntry, Artifact} from '../../../core/models/research.model';
 
 export interface TaskDraft {
@@ -32,6 +32,15 @@ export class LinesBoard {
 
   /** When true, the board and all modals are read-only */
   readonly = input(false);
+
+  /** Subjects available for @mention in logs */
+  subjects = input<MentionableSubject[]>([]);
+
+  /** Artifacts available for @mention in logs */
+  mentionableArtifacts = input<MentionableArtifact[]>([]);
+
+  /** Tracked parameters for subject update panel */
+  trackedParameters = input<TrackedParameterInfo[]>([]);
 
   // ── Modal state ──
   modal = signal<ModalType>('none');

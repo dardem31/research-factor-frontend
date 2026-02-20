@@ -1,0 +1,113 @@
+<div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+  <h2 class="text-xl font-bold text-gray-900">Обзор проекта</h2>
+  <p class="mt-1 text-sm text-gray-500">{{ isEditMode() ? 'Проверьте данные перед сохранением.' : 'Проверьте данные перед созданием.' }}</p>
+
+  <div class="mt-6 space-y-4">
+    <!-- Project Info -->
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <h3 class="text-sm font-semibold text-gray-800">Основная информация</h3>
+      <div class="mt-2 space-y-1 text-sm">
+        <p><span class="font-medium text-gray-700">Название:</span> {{ title() }}</p>
+        <p><span class="font-medium text-gray-700">Гипотеза:</span> {{ hypothesis() }}</p>
+        @if (description()) {
+          <p><span class="font-medium text-gray-700">Описание:</span> {{ description() }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- Primary Outcomes -->
+    @if (primaryOutcomes().length > 0) {
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <h3 class="text-sm font-semibold text-gray-800">Primary Outcomes ({{ primaryOutcomes().length }})</h3>
+        <div class="mt-2 space-y-1.5">
+          @for (outcome of primaryOutcomes(); track $index) {
+            <p class="text-sm text-gray-700">&bull; {{ outcome }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Study Protocol -->
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <h3 class="text-sm font-semibold text-gray-800">Study Protocol</h3>
+      <div class="mt-2 space-y-1 text-sm">
+        @if (protocolPrimaryOutcome()) { <p><span class="font-medium text-gray-700">Primary Outcome:</span> {{ protocolPrimaryOutcome() }}</p> }
+        @if (protocolSampleSizeJustification()) { <p><span class="font-medium text-gray-700">Sample Size Justification:</span> {{ protocolSampleSizeJustification() }}</p> }
+        @if (protocolStatisticalMethod()) { <p><span class="font-medium text-gray-700">Statistical Method:</span> {{ protocolStatisticalMethod() }}</p> }
+        @if (protocolRandomizationMethod()) { <p><span class="font-medium text-gray-700">Randomization Method:</span> {{ protocolRandomizationMethod() }}</p> }
+        @if (protocolBlindingDetails()) { <p><span class="font-medium text-gray-700">Blinding Details:</span> {{ protocolBlindingDetails() }}</p> }
+        @if (protocolInterventionDescription()) { <p><span class="font-medium text-gray-700">Intervention:</span> {{ protocolInterventionDescription() }}</p> }
+        @if (protocolInclusionCriteria()) { <p><span class="font-medium text-gray-700">Inclusion Criteria:</span> {{ protocolInclusionCriteria() }}</p> }
+        @if (protocolExclusionCriteria()) { <p><span class="font-medium text-gray-700">Exclusion Criteria:</span> {{ protocolExclusionCriteria() }}</p> }
+        @if (protocolEarlyStoppingCriteria()) { <p><span class="font-medium text-gray-700">Early Stopping Criteria:</span> {{ protocolEarlyStoppingCriteria() }}</p> }
+      </div>
+    </div>
+
+    <!-- Tracked Parameters -->
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <h3 class="text-sm font-semibold text-gray-800">Отслеживаемые параметры ({{ trackedParameters().length }})</h3>
+      <div class="mt-2 flex flex-wrap gap-2">
+        @for (p of trackedParameters(); track $index) {
+          <span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">{{ p.name }} ({{ p.unit }})</span>
+        }
+      </div>
+    </div>
+
+    <!-- Research Lines -->
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <h3 class="text-sm font-semibold text-gray-800">Research Lines ({{ lines().length }})</h3>
+      <div class="mt-2 space-y-2">
+        @for (line of lines(); track $index) {
+          <div class="rounded-md bg-white p-3 ring-1 ring-gray-200">
+            <p class="text-sm font-medium text-gray-800">{{ line.title }}</p>
+            <div class="mt-1 flex gap-3 text-xs text-gray-500">
+              @if (line.duration) { <span>Duration: {{ line.duration }}</span> }
+              <span>Stage Questions: {{ line.stageQuestions.length }}</span>
+              <span>Tasks: {{ line.tasks.length }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Subject Groups -->
+    @if (groups().length > 0) {
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <h3 class="text-sm font-semibold text-gray-800">Группы испытуемых ({{ groups().length }})</h3>
+        <div class="mt-2 space-y-2">
+          @for (g of groups(); track $index) {
+            <div class="rounded-md bg-white p-3 ring-1 ring-gray-200">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-800">{{ g.label }}</p>
+                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">{{ g.subjects.length }} subjects</span>
+              </div>
+              @if (g.description) { <p class="mt-0.5 text-xs text-gray-500">{{ g.description }}</p> }
+              @if (g.subjects.length > 0) {
+                <div class="mt-2 flex flex-wrap gap-1.5">
+                  @for (s of g.subjects; track $index) {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-600 ring-1 ring-gray-200">
+                      <span class="font-mono">{{ s.code }}</span>
+                      @if (s.kycVerified) { <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span> }
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Stats -->
+    <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+      <h3 class="text-sm font-semibold text-indigo-900">Итого</h3>
+      <div class="mt-2 grid grid-cols-2 gap-3 text-sm md:grid-cols-5">
+        <div><p class="text-xs text-indigo-600">Research Lines</p><p class="text-lg font-bold text-indigo-900">{{ lines().length }}</p></div>
+        <div><p class="text-xs text-indigo-600">Stage Questions</p><p class="text-lg font-bold text-indigo-900">{{ totalStageQuestions() }}</p></div>
+        <div><p class="text-xs text-indigo-600">Tasks</p><p class="text-lg font-bold text-indigo-900">{{ totalTasks() }}</p></div>
+        <div><p class="text-xs text-indigo-600">Параметры</p><p class="text-lg font-bold text-indigo-900">{{ trackedParameters().length }}</p></div>
+        <div><p class="text-xs text-indigo-600">Subjects</p><p class="text-lg font-bold text-indigo-900">{{ totalSubjects() }}</p></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -86,22 +86,124 @@
         <div>
           <!-- Add log entry -->
           @if (!readonly()) {
-            <div class="mb-4 flex gap-2">
-              <input
-                type="text"
-                class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-                placeholder="Новая запись в журнал..."
-                [(ngModel)]="newLogText"
-                (keydown.enter)="addLog()"
-              />
-              <button
-                class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
-                [disabled]="!newLogText.trim()"
-                (click)="addLog()"
-              >
-                Добавить
-              </button>
+            <div class="relative mb-4">
+              <div class="flex gap-2">
+                <input
+                  #logInput
+                  type="text"
+                  class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+                  placeholder="Новая запись... используйте @ для упоминания"
+                  [(ngModel)]="newLogText"
+                  (input)="onLogInput($event); syncPendingWithText()"
+                  (keydown)="onLogKeydown($event)"
+                  (keydown.enter)="!mentionOpen() && addLog()"
+                  (blur)="closeMention()"
+                />
+                <button
+                  class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+                  [disabled]="!newLogText.trim()"
+                  (click)="addLog()"
+                >
+                  Добавить
+                </button>
+              </div>
+
+              <!-- Mention dropdown -->
+              @if (mentionOpen() && mentionItems().length > 0) {
+                <div class="absolute left-0 top-full z-10 mt-1 max-h-48 w-80 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  @for (item of mentionItems(); track item.id; let mi = $index) {
+                    <button
+                      class="flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm transition"
+                      [class]="mi === mentionIndex() ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'"
+                      (mousedown)="$event.preventDefault(); selectMention(item)"
+                    >
+                      @if (item.type === 'subject') {
+                        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">И</span>
+                      } @else {
+                        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-600">А</span>
+                      }
+                      <span class="font-medium">{{ item.label }}</span>
+                      <span class="text-xs text-gray-400">{{ item.type === 'subject' ? 'Subject' : 'Artifact' }}</span>
+                    </button>
+                  }
+                </div>
+              }
             </div>
+
+            <!-- ── Subject Update Panel ── -->
+            @if (pendingSubjectUpdates().length > 0) {
+              <div class="mt-3 space-y-2">
+                <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Обновление параметров</p>
+                @for (pending of pendingSubjectUpdates(); track pending.subjectId) {
+                  <div class="rounded-lg border border-indigo-200 bg-indigo-50/50">
+                    <!-- Subject header -->
+                    <div class="flex items-center justify-between px-3 py-2">
+                      <button
+                        class="flex cursor-pointer items-center gap-2 text-sm font-semibold text-indigo-700"
+                        (click)="togglePendingCollapsed(pending.subjectId)"
+                      >
+                        <svg
+                          class="h-3.5 w-3.5 transition-transform"
+                          [class.rotate-90]="!pending.collapsed"
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">И</span>
+                        {{ pending.subjectCode }}
+                      </button>
+                      <button
+                        class="cursor-pointer rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                        (click)="removePendingSubjectUpdate(pending.subjectId)"
+                        title="Убрать"
+                      >
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+
+                    <!-- Parameter fields -->
+                    @if (!pending.collapsed) {
+                      <div class="border-t border-indigo-100 px-3 py-2">
+                        @if (pending.params.length === 0) {
+                          <p class="py-2 text-center text-xs italic text-gray-400">Нет параметров для обновления</p>
+                        } @else {
+                          <div class="space-y-2">
+                            @for (param of pending.params; track param.parameterId) {
+                              <div class="flex items-center gap-3">
+                                <!-- Checkbox to enable param -->
+                                <input
+                                  type="checkbox"
+                                  class="h-4 w-4 cursor-pointer rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  [checked]="param.enabled"
+                                  (change)="toggleParamEnabled(pending.subjectId, param.parameterId)"
+                                />
+                                <!-- Param label -->
+                                <div class="min-w-0 flex-1">
+                                  <span class="text-xs font-medium text-gray-700">{{ param.parameterName }}</span>
+                                  @if (param.parameterUnit) {
+                                    <span class="ml-1 text-[10px] text-gray-400">({{ param.parameterUnit }})</span>
+                                  }
+                                  <span class="ml-2 text-[10px] text-gray-400">текущее: {{ param.currentValue }}</span>
+                                </div>
+                                <!-- New value input -->
+                                <input
+                                  type="number"
+                                  class="w-24 rounded-md border border-gray-300 px-2 py-1 text-xs transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                                  [disabled]="!param.enabled"
+                                  [value]="param.newValue ?? ''"
+                                  placeholder="—"
+                                  (input)="updateParamValue(pending.subjectId, param.parameterId, $any($event.target).valueAsNumber)"
+                                />
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           }
 
           <!-- Log entries list -->
@@ -114,6 +216,44 @@
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1">
                       <p class="text-sm text-gray-800">{{ entry.text }}</p>
+                      <!-- Mention badges -->
+                      @if (entry.subjectUpdates.length > 0 || entry.artifacts.length > 0) {
+                        <div class="mt-1.5 flex flex-wrap gap-1">
+                          @for (su of entry.subjectUpdates; track su.id) {
+                            <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
+                              <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+                              {{ su.subjectId }}
+                              @if (su.parameterChanges.length > 0) {
+                                <span class="text-[9px] text-indigo-400">({{ su.parameterChanges.length }} param.)</span>
+                              }
+                            </span>
+                          }
+                          @for (a of entry.artifacts; track a.id) {
+                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                              <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                              {{ a.fileName }}
+                            </span>
+                          }
+                        </div>
+                      }
+                      <!-- Parameter change details -->
+                      @for (su of entry.subjectUpdates; track su.id) {
+                        @if (su.parameterChanges.length > 0) {
+                          <div class="mt-1.5 rounded border border-indigo-100 bg-indigo-50/30 px-2.5 py-1.5">
+                            <p class="text-[10px] font-semibold text-indigo-600">{{ su.subjectId }}:</p>
+                            <div class="mt-0.5 space-y-0.5">
+                              @for (pc of su.parameterChanges; track pc.id) {
+                                <p class="text-[10px] text-gray-600">
+                                  <span class="font-medium">{{ getParameterName(pc.parameterId) }}:</span>
+                                  <span class="text-gray-400">{{ pc.previousValue }}</span>
+                                  <span class="mx-0.5 text-gray-300">&#8594;</span>
+                                  <span class="font-semibold text-indigo-700">{{ pc.newValue }}</span>
+                                </p>
+                              }
+                            </div>
+                          </div>
+                        }
+                      }
                       <p class="mt-1 text-xs text-gray-400">{{ entry.createdAt | date:'dd.MM.yyyy HH:mm:ss' }}</p>
                     </div>
                     @if (!readonly()) {
