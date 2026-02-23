@@ -1,7 +1,43 @@
-import {computed, Injectable, signal} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {computed, Injectable, signal, inject} from '@angular/core';
+import {Observable} from 'rxjs';
+import {tap} from 'rxjs/operators';
+import {environment} from '../../../environments/environment';
 import {
   Research, ResearchLine, ResearchTask, StudyProtocol,
 } from '../models/research.model';
+
+export interface ResearchCreateDto {
+  title: string;
+  hypothesis: string;
+  description: string;
+  protocol: ProtocolCreateDto;
+  primaryOutcomes: PrimaryOutcomeCreateDto[];
+  trackedParameters: TrackedParameterCreateDto[];
+}
+
+export interface ProtocolCreateDto {
+  primaryOutcome: string;
+  sampleSizeJustification: string;
+  statisticalMethod: string;
+  randomizationMethod: string;
+  blindingDetails: string;
+  interventionDescription: string;
+  inclusionCriteria: string;
+  exclusionCriteria: string;
+  earlyStoppingCriteria: string;
+}
+
+export interface PrimaryOutcomeCreateDto {
+  text: string;
+}
+
+export interface TrackedParameterCreateDto {
+  name: string;
+  unit: string;
+  referenceMin?: number;
+  referenceMax?: number;
+}
 
 export interface SubjectGroupInput {
   label: string;
@@ -45,6 +81,9 @@ export interface AddLineInput {
 
 @Injectable({providedIn: 'root'})
 export class ResearchService {
+  private http = inject(HttpClient);
+  private readonly API_URL = environment.apiBaseUrl;
+
   private _projects = signal<Research[]>(this.loadFromStorage());
   projects = computed(() => this._projects());
 
@@ -53,6 +92,10 @@ export class ResearchService {
   }
 
   // ════════════ Research CRUD ════════════
+
+  saveNewResearch(research: ResearchCreateDto): Observable<{id: string}> {
+    return this.http.post<{id: string}>(`${this.API_URL}api/v1/dashboard/research`, research, { withCredentials: true });
+  }
 
   createResearch(input: CreateResearchInput): Research {
     const project: Research = {

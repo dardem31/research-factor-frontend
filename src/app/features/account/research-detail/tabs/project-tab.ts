@@ -1,4 +1,4 @@
-import {Component, model, signal} from '@angular/core';
+import {Component, model, output} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ParamDraft} from '../research-detail.types';
 
@@ -36,6 +36,10 @@ export class ProjectTab {
 
   // ── Editing mode (for header text) ──
   isEditMode = model(false);
+  isSaving = model(false);
+
+  // ── Events ──
+  save = output<void>();
 
   addOutcome() {
     const text = this.newOutcomeText.trim();

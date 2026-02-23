@@ -14,6 +14,30 @@ import {ReviewTab} from './tabs/review-tab';
 
 type TabKey = 'project' | 'lines' | 'groups' | 'review';
 
+interface ResearchCreateDto {
+  title: string;
+  hypothesis: string;
+  description: string;
+  protocol: {
+    primaryOutcome: string;
+    sampleSizeJustification: string;
+    statisticalMethod: string;
+    randomizationMethod: string;
+    blindingDetails: string;
+    interventionDescription: string;
+    inclusionCriteria: string;
+    exclusionCriteria: string;
+    earlyStoppingCriteria: string;
+  };
+  primaryOutcomes: {text: string}[];
+  trackedParameters: {
+    name: string;
+    unit: string;
+    referenceMin?: number;
+    referenceMax?: number;
+  }[];
+}
+
 @Component({
   standalone: true,
   selector: 'rf-research-detail',
@@ -35,6 +59,13 @@ export default class ResearchDetailPage implements OnInit {
     {key: 'groups', label: 'Группы'},
     {key: 'review', label: 'Обзор'},
   ];
+
+  isSaving = signal(false);
+
+  isTabDisabled(key: TabKey): boolean {
+    if (key === 'project') return false;
+    return !this.isEditMode();
+  }
 
   // ── Shared state bound to child tabs via model() ──
   title = signal('');
@@ -167,6 +198,67 @@ export default class ResearchDetailPage implements OnInit {
 
   cancel() {
     this.router.navigate(['/account']);
+  }
+
+  saveProject() {
+    if (this.isSaving()) return;
+
+    const dto: ResearchCreateDto = {
+      title: this.title(),
+      hypothesis: this.hypothesis(),
+      description: this.description(),
+      protocol: {
+        primaryOutcome: this.protocolPrimaryOutcome(),
+        sampleSizeJustification: this.protocolSampleSizeJustification(),
+        statisticalMethod: this.protocolStatisticalMethod(),
+        randomizationMethod: this.protocolRandomizationMethod(),
+        blindingDetails: this.protocolBlindingDetails(),
+        interventionDescription: this.protocolInterventionDescription(),
+        inclusionCriteria: this.protocolInclusionCriteria(),
+        exclusionCriteria: this.protocolExclusionCriteria(),
+        earlyStoppingCriteria: this.protocolEarlyStoppingCriteria(),
+      },
+      primaryOutcomes: this.primaryOutcomes().map(text => ({text})),
+      trackedParameters: this.trackedParameters().map(p => ({
+        name: p.name,
+        unit: p.unit
+      })),
+    };
+
+    this.isSaving.set(true);
+
+    if (this.editingId()) {
+      // For now we use the same endpoint or update logic as requested
+      // The prompt says "при создании нового" - but we should handle updates too if we are step-by-step
+      // However, the prompt specifically mentions POST for creation.
+      // If we already have an ID, we might need a PUT.
+      // But the requirement says "изменения каждого таба сохранялись автономно"
+      // Let's implement the creation POST first as requested.
+      this.researchService.saveNewResearch(dto).subscribe({
+        next: (res) => {
+          this.editingId.set(res.id);
+          this.isSaving.set(false);
+          // Optional: toast success
+        },
+        error: () => this.isSaving.set(false)
+      });
+    } else {
+      this.researchService.saveNewResearch(dto).subscribe({
+        next: (res) => {
+          this.editingId.set(res.id);
+          this.isSaving.set(false);
+          // Navigation might be needed if URL should contain ID
+          this.router.navigate(['/account/research', res.id], { replaceUrl: true });
+        },
+        error: () => this.isSaving.set(false)
+      });
+    }
+  }
+
+  onProjectSaved(id: string) {
+    this.editingId.set(id);
+    // Move to next tab or stay on project? User didn't specify, but usually staying is safer.
+    // However, the instructions say "включаем остальные табы и можем позволить юзеру продолжить работу"
   }
 
   submit() {
