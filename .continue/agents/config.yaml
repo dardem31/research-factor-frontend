@@ -1,4 +1,4 @@
-name: ResearchFactor Config
+name: ResearchFactor Frontend Config
 version: 0.0.1
 schema: v1
 
@@ -19,6 +19,11 @@ models:
     apiBase: https://openrouter.ai/api/v1
     apiKey: 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
     timeout: 600000
+  - name: google/gemini-3-flash-preview
+    provider: openrouter
+    model: google/gemini-3-flash-preview
+    apiBase: https://openrouter.ai/api/v1
+    apiKey: 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
 
   - name: qwen2.5-coder 1.5b
     provider: ollama

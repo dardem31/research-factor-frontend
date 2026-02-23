@@ -39,8 +39,13 @@
     <!-- User -->
     <div class="border-t border-gray-200 px-4 py-4">
       <div class="flex items-center justify-between">
-        <div class="truncate text-sm font-medium text-gray-700">
-          {{ auth.username() }}
+        <div class="flex flex-col truncate">
+          <div class="truncate text-sm font-semibold text-gray-900">
+            {{ auth.user()?.email }}
+          </div>
+          <div class="text-[10px] text-gray-400 uppercase tracking-tighter">
+            ID: {{ auth.user()?.id }}
+          </div>
         </div>
         <button
           class="cursor-pointer rounded-md px-3 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
