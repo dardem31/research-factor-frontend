@@ -1,22 +1,10 @@
 import {Component, input, model, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {TaskModal, MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../task-modal/task-modal';
-import {LogEntry, Artifact} from '../../../core/models/research.model';
+import {TaskDraft} from '../../../core/dtos/lines/task-draft.dto';
+import {LineDraft} from '../../../core/dtos/lines/line-draft.dto';
 
-export interface TaskDraft {
-  title: string;
-  description: string;
-  logEntries: LogEntry[];
-  artifacts: Artifact[];
-}
-
-export interface LineDraft {
-  title: string;
-  description: string;
-  duration: string;
-  stageQuestions: string[];
-  tasks: TaskDraft[];
-}
+export type { LineDraft, TaskDraft };
 
 type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 

@@ -1,54 +1,21 @@
-import {Component, input, output, signal, computed, OnInit, ElementRef, ViewChild, effect} from '@angular/core';
+import {Component, input, output, signal, computed, OnInit, ElementRef, ViewChild} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
-import {LogEntry, Artifact, ArtifactType, ParameterField, SubjectUpdate, ParameterChange} from '../../../core/models/research.model';
+import {LogEntry, ParameterChange, SubjectUpdate} from '../../../core/models/research/log-entry.model';
+import {Artifact, ArtifactType} from '../../../core/models/research/artifact.model';
+import {TaskData} from '../../../core/dtos/task/task-data.dto';
+import {MentionableSubject} from '../../../core/dtos/task/mentionable-subject.dto';
+import {MentionableArtifact} from '../../../core/dtos/task/mentionable-artifact.dto';
+import {TrackedParameterInfo} from '../../../core/dtos/task/tracked-parameter-info.dto';
+import {PendingSubjectUpdate} from '../../../core/dtos/task/pending-subject-update.dto';
+import {PendingParamEdit} from '../../../core/dtos/task/pending-param-edit.dto';
 
-export interface TaskData {
-  title: string;
-  description: string;
-  logEntries: LogEntry[];
-  artifacts: Artifact[];
-}
-
-export interface MentionableSubject {
-  id: string;
-  code: string;
-  parameterFields: ParameterField[];
-}
-
-export interface MentionableArtifact {
-  id: string;
-  fileName: string;
-}
-
-export interface TrackedParameterInfo {
-  id: string;
-  name: string;
-  unit: string;
-}
+export type { TaskData, MentionableSubject, MentionableArtifact, TrackedParameterInfo, PendingSubjectUpdate, PendingParamEdit };
 
 interface MentionItem {
   type: 'subject' | 'artifact';
   id: string;
   label: string;
-}
-
-/** Pending parameter edit for a single parameter of a mentioned subject */
-export interface PendingParamEdit {
-  parameterId: string;
-  parameterName: string;
-  parameterUnit: string;
-  currentValue: number;
-  newValue: number | null;
-  enabled: boolean;
-}
-
-/** A mentioned subject with pending parameter edits */
-export interface PendingSubjectUpdate {
-  subjectId: string;
-  subjectCode: string;
-  params: PendingParamEdit[];
-  collapsed: boolean;
 }
 
 @Component({
@@ -338,7 +305,6 @@ export class TaskModal implements OnInit {
       {
         id: crypto.randomUUID(),
         text,
-        subjects: [],
         subjectUpdates,
         artifacts: linkedArtifacts,
         createdAt: new Date().toISOString(),

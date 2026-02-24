@@ -1,6 +1,8 @@
 import {Component, computed, input, model, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {GroupDraft, ParamDraft, SubjectDraft} from '../research-detail.types';
+import {GroupDraft} from '../../../../core/dtos/research/group-draft.dto';
+import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
+import {SubjectDraft} from '../../../../core/dtos/research/subject-draft.dto';
 
 type GroupModal = 'none' | 'editGroup' | 'editSubject';
 

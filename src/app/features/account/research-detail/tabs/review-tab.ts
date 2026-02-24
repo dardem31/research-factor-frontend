@@ -1,6 +1,7 @@
 import {Component, computed, input} from '@angular/core';
 import {LineDraft} from '../../../../shared/ui/lines-board/lines-board';
-import {GroupDraft, ParamDraft} from '../research-detail.types';
+import {GroupDraft} from '../../../../core/dtos/research/group-draft.dto';
+import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
 
 @Component({
   standalone: true,

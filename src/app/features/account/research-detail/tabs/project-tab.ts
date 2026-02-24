@@ -1,6 +1,7 @@
 import {Component, model, output} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {ParamDraft} from '../research-detail.types';
+import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
+import {BlindingType} from '../../../../core/dtos/research/research-create.dto';
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ export class ProjectTab {
   title = model('');
   hypothesis = model('');
   description = model('');
+  blindingType = model<BlindingType>('OPEN_LABEL');
 
   // ── Study protocol ──
   protocolPrimaryOutcome = model('');

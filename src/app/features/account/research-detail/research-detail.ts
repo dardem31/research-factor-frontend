@@ -1,11 +1,12 @@
 import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {ResearchService} from '../../../core/services/research.service';
-import {Research} from '../../../core/models/research.model';
+import {ResearchService, ResearchCreateDto, BlindingType} from '../../../core/services/research.service';
+import {Research} from '../../../core/models/research/research.model';
 import {LineDraft} from '../../../shared/ui/lines-board/lines-board';
 import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../../../shared/ui/task-modal/task-modal';
-import {ParameterField} from '../../../core/models/research.model';
-import {GroupDraft, ParamDraft} from './research-detail.types';
+import {ParameterField} from '../../../core/models/research/parameter-field.model';
+import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
+import {ParamDraft} from '../../../core/dtos/research/param-draft.dto';
 
 import {ProjectTab} from './tabs/project-tab';
 import {LinesTab} from './tabs/lines-tab';
@@ -13,30 +14,6 @@ import {GroupsTab} from './tabs/groups-tab';
 import {ReviewTab} from './tabs/review-tab';
 
 type TabKey = 'project' | 'lines' | 'groups' | 'review';
-
-interface ResearchCreateDto {
-  title: string;
-  hypothesis: string;
-  description: string;
-  protocol: {
-    primaryOutcome: string;
-    sampleSizeJustification: string;
-    statisticalMethod: string;
-    randomizationMethod: string;
-    blindingDetails: string;
-    interventionDescription: string;
-    inclusionCriteria: string;
-    exclusionCriteria: string;
-    earlyStoppingCriteria: string;
-  };
-  primaryOutcomes: {text: string}[];
-  trackedParameters: {
-    name: string;
-    unit: string;
-    referenceMin?: number;
-    referenceMax?: number;
-  }[];
-}
 
 @Component({
   standalone: true,
@@ -71,6 +48,7 @@ export default class ResearchDetailPage implements OnInit {
   title = signal('');
   hypothesis = signal('');
   description = signal('');
+  blindingType = signal<BlindingType>('OPEN_LABEL');
 
   protocolPrimaryOutcome = signal('');
   protocolSampleSizeJustification = signal('');
@@ -207,6 +185,7 @@ export default class ResearchDetailPage implements OnInit {
       title: this.title(),
       hypothesis: this.hypothesis(),
       description: this.description(),
+      blindingType: this.blindingType(),
       protocol: {
         primaryOutcome: this.protocolPrimaryOutcome(),
         sampleSizeJustification: this.protocolSampleSizeJustification(),
@@ -221,7 +200,9 @@ export default class ResearchDetailPage implements OnInit {
       primaryOutcomes: this.primaryOutcomes().map(text => ({text})),
       trackedParameters: this.trackedParameters().map(p => ({
         name: p.name,
-        unit: p.unit
+        unit: p.unit,
+        referenceMin: p.referenceMin,
+        referenceMax: p.referenceMax
       })),
     };
 

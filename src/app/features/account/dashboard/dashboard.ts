@@ -1,7 +1,8 @@
 import {Component, inject, OnInit, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {DatePipe} from '@angular/common';
-import {ResearchOverviewItem, ResearchService} from '../../../core/services/research.service';
+import {ResearchService, ResearchOverviewItem} from '../../../core/services/research.service';
+import { ResearchStatus } from '../../../core/models/research/research-status.model';
 
 @Component({
   standalone: true,
