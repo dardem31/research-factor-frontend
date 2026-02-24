@@ -1,20 +1,48 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, OnInit, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {DatePipe} from '@angular/common';
-import {ResearchService} from '../../../core/services/research.service';
-import {ResearchStatus} from '../../../core/models/research.model';
+import {ResearchOverviewItem, ResearchService} from '../../../core/services/research.service';
 
 @Component({
   standalone: true,
   templateUrl: './dashboard.html',
   imports: [RouterLink, DatePipe],
 })
-export default class DashboardPage {
-  research = inject(ResearchService);
+export default class DashboardPage implements OnInit {
+  private researchService = inject(ResearchService);
+
+  researchItems = signal<ResearchOverviewItem[]>([]);
+  totalCount = signal<number>(0);
+  isLoading = signal(false);
+
+  ngOnInit() {
+    this.loadResearch();
+  }
+
+  loadResearch() {
+    this.isLoading.set(true);
+    const filter = {
+      pagination: { limit: 20, order: 'prev' as const }
+    };
+
+    this.researchService.listResearch(filter).subscribe({
+      next: (res) => {
+        this.researchItems.set(res.items);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false)
+    });
+
+    this.researchService.countResearch(filter).subscribe({
+      next: (res) => this.totalCount.set(res.count)
+    });
+  }
 
   delete(id: string) {
     if (confirm('Удалить проект?')) {
-      this.research.deleteResearch(id);
+      this.researchService.deleteResearch(id);
+      // After deletion, we might want to reload or filter local state
+      this.loadResearch();
     }
   }
 
@@ -22,12 +50,12 @@ export default class DashboardPage {
     event.stopPropagation();
     event.preventDefault();
     if (confirm('Отправить проект на рецензирование? После отправки редактирование будет недоступно.')) {
-      this.research.submitForReview(id);
+      this.researchService.submitForReview(id);
     }
   }
 
-  statusLabel(status: ResearchStatus): string {
-    const map: Record<ResearchStatus, string> = {
+  statusLabel(status: string): string {
+    const map: Record<string, string> = {
       DRAFT: 'Черновик',
       PENDING_REVIEW: 'На рецензии',
       PUBLISHED: 'Опубликован',
@@ -37,8 +65,8 @@ export default class DashboardPage {
     return map[status] ?? status;
   }
 
-  statusColor(status: ResearchStatus): string {
-    const map: Record<ResearchStatus, string> = {
+  statusColor(status: string): string {
+    const map: Record<string, string> = {
       DRAFT: 'bg-gray-100 text-gray-600',
       PENDING_REVIEW: 'bg-yellow-100 text-yellow-700',
       PUBLISHED: 'bg-blue-100 text-blue-700',

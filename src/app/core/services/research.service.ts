@@ -7,6 +7,34 @@ import {
   Research, ResearchLine, ResearchTask, StudyProtocol,
 } from '../models/research.model';
 
+export interface ResearchOverviewItem {
+  id: string;
+  title: string;
+  userId: string;
+  description?: string;
+  status: string;
+  researchLinesCount: number;
+  primaryOutcomesCount: number;
+  createdAt: string;
+}
+
+export interface SearchResultDto<T> {
+  items: T[];
+  hasMore: boolean;
+}
+
+export interface ResearchFilterDto {
+  filter?: {
+    title?: string;
+    status?: string;
+  };
+  pagination?: {
+    limit: number;
+    startFrom?: string;
+    order?: 'next' | 'prev';
+  };
+}
+
 export interface ResearchCreateDto {
   title: string;
   hypothesis: string;
@@ -76,7 +104,7 @@ export interface AddLineInput {
   title: string;
   description: string;
   duration: string;
-  stageQuestions: string[];          // question texts
+  stageQuestions: string[];
 }
 
 @Injectable({providedIn: 'root'})
@@ -89,6 +117,35 @@ export class ResearchService {
 
   getById(id: string): Research | undefined {
     return this._projects().find(p => p.id === id);
+  }
+
+  // ════════════ API Methods ════════════
+
+  listResearch(filter: ResearchFilterDto): Observable<SearchResultDto<ResearchOverviewItem>> {
+    let params: any = {};
+    if (filter.pagination) {
+      params['pagination.limit'] = filter.pagination.limit;
+      if (filter.pagination.startFrom) params['pagination.startFrom'] = filter.pagination.startFrom;
+      if (filter.pagination.order) params['pagination.order'] = filter.pagination.order;
+    }
+    if (filter.filter?.title) params['filter.title'] = filter.filter.title;
+    if (filter.filter?.status) params['filter.status'] = filter.filter.status;
+
+    return this.http.get<SearchResultDto<ResearchOverviewItem>>(
+      `${this.API_URL}api/v1/dashboard/research/list`,
+      { params, withCredentials: true }
+    );
+  }
+
+  countResearch(filter: ResearchFilterDto): Observable<{count: number}> {
+    let params: any = {};
+    if (filter.filter?.title) params['filter.title'] = filter.filter.title;
+    if (filter.filter?.status) params['filter.status'] = filter.filter.status;
+
+    return this.http.get<{count: number}>(
+      `${this.API_URL}api/v1/dashboard/research/count`,
+      { params, withCredentials: true }
+    );
   }
 
   // ════════════ Research CRUD ════════════
@@ -114,7 +171,7 @@ export class ResearchService {
           code: s.code,
           remarks: s.remarks,
           kycVerified: s.kycVerified,
-          groupId: '',  // will be set below
+          groupId: '',
           parameterFields: s.parameterValues.map(pv => ({
             id: crypto.randomUUID(),
             parameterId: pv.parameterId,
