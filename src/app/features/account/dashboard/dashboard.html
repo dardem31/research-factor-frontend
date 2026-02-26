@@ -31,9 +31,12 @@
     <div class="mt-2 text-sm text-gray-500">Всего проектов: {{ totalCount() }}</div>
     <div class="mt-4 space-y-4">
       @for (project of researchItems(); track project.id) {
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+        <div
+          (click)="openResearch(project.id)"
+          class="cursor-pointer rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
           <div class="flex items-start justify-between">
-            <a [routerLink]="['/account/research', project.id]" class="flex-1">
+            <div class="flex-1">
               <div class="flex items-center gap-2.5">
                 <h3 class="text-lg font-semibold text-gray-900">{{ project.title }}</h3>
                 <span class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" [class]="statusColor(project.status)">
@@ -48,9 +51,9 @@
                 <span>{{ project.primaryOutcomesCount }} Primary Outcomes</span>
                 <span>Создан: {{ project.createdAt | date:'short' }}</span>
               </div>
-            </a>
+            </div>
 
-            <div class="ml-4 flex shrink-0 items-center gap-2">
+            <div class="ml-4 flex shrink-0 items-center gap-2" (click)="$event.stopPropagation()">
               @if (project.status === 'DRAFT') {
                 <button
                   class="cursor-pointer rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600"

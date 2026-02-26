@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { ResearchCreateDto } from '../../dtos/research/research-create.dto';
+import { ResearchDto } from '../../dtos/research/research.dto';
 import { ResearchFilterDto } from '../../dtos/research/research-filter.dto';
 import { SearchResultDto } from '../../dtos/research/search-result.dto';
 import { ResearchOverviewItem } from '../../dtos/research/research-overview-item.dto';
@@ -39,7 +39,14 @@ export class ResearchApiService {
     );
   }
 
-  createResearch(research: ResearchCreateDto): Observable<{ id: string }> {
+  getResearchById(id: string): Observable<ResearchDto> {
+    return this.http.get<ResearchDto>(
+      `${this.API_URL}api/v1/dashboard/research/${id}`,
+      { withCredentials: true }
+    );
+  }
+
+  createResearch(research: ResearchDto): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(
       `${this.API_URL}api/v1/dashboard/research`,
       research,
@@ -47,9 +54,9 @@ export class ResearchApiService {
     );
   }
 
-  updateResearch(id: string, research: ResearchCreateDto): Observable<void> {
+  updateResearch(research: ResearchDto): Observable<void> {
     return this.http.put<void>(
-      `${this.API_URL}api/v1/dashboard/research/${id}`,
+      `${this.API_URL}api/v1/dashboard/research`,
       research,
       { withCredentials: true }
     );

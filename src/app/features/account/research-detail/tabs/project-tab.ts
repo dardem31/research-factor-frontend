@@ -1,7 +1,7 @@
 import {Component, model, output} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
-import {BlindingType} from '../../../../core/dtos/research/research-create.dto';
+import {BlindingType} from '../../../../core/dtos/research/research.dto';
 
 @Component({
   standalone: true,

@@ -15,7 +15,7 @@ export const ACCOUNT_ROUTES: Routes = [
         loadComponent: () => import('./research-detail/research-detail'),
       },
       {
-        path: ':id/edit',
+        path: 'research/:id',
         loadComponent: () => import('./research-detail/research-detail'),
       }
     ],

@@ -4,11 +4,11 @@ import {ResearchStateService} from './research/research-state.service';
 import {ResearchCrudService} from './research/research-crud.service';
 import {ResearchLinesService} from './research/research-lines.service';
 import type {ResearchFilterDto} from '../dtos/research/research-filter.dto';
-import type {ResearchCreateDto} from '../dtos/research/research-create.dto';
+import type {ResearchDto} from '../dtos/research/research.dto';
 import type {CreateResearchInput, UpdateResearchInput, AddLineInput} from '../dtos/research/research-inputs.dto';
 
 // Re-export types for convenience
-export type {BlindingType, ResearchCreateDto} from '../dtos/research/research-create.dto';
+export type {BlindingType, ResearchDto} from '../dtos/research/research.dto';
 export type {ResearchOverviewItem} from '../dtos/research/research-overview-item.dto';
 export type {SearchResultDto} from '../dtos/research/search-result.dto';
 export type {ResearchFilterDto} from '../dtos/research/research-filter.dto';
@@ -43,7 +43,11 @@ export class ResearchService {
         return this.api.countResearch(filter);
     }
 
-    saveNewResearch(dto: ResearchCreateDto) {
+    getResearchById(id: string) {
+        return this.api.getResearchById(id);
+    }
+
+    saveNewResearch(dto: ResearchDto) {
         return this.api.createResearch(dto);
     }
 

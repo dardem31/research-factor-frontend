@@ -1,6 +1,7 @@
 export type BlindingType = 'OPEN_LABEL' | 'SINGLE_BLIND' | 'DOUBLE_BLIND' | 'TRIPLE_BLIND';
 
-export interface ProtocolCreateDto {
+export interface ProtocolDto {
+  id: number;
   primaryOutcome: string;
   sampleSizeJustification: string;
   statisticalMethod: string;
@@ -12,23 +13,26 @@ export interface ProtocolCreateDto {
   earlyStoppingCriteria: string;
 }
 
-export interface PrimaryOutcomeCreateDto {
+export interface PrimaryOutcomeDto {
+  id: number;
   text: string;
 }
 
-export interface TrackedParameterCreateDto {
+export interface TrackedParameterDto {
+  id: number;
   name: string;
   unit: string;
   referenceMin?: number;
   referenceMax?: number;
 }
 
-export interface ResearchCreateDto {
+export interface ResearchDto {
+  id: number;
   title: string;
   hypothesis: string;
   description: string;
   blindingType: BlindingType;
-  protocol: ProtocolCreateDto;
-  primaryOutcomes: PrimaryOutcomeCreateDto[];
-  trackedParameters: TrackedParameterCreateDto[];
+  protocol: ProtocolDto;
+  primaryOutcomes: PrimaryOutcomeDto[];
+  trackedParameters: TrackedParameterDto[];
 }

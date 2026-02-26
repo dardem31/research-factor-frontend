@@ -1,5 +1,5 @@
 import {Component, inject, OnInit, signal} from '@angular/core';
-import {RouterLink} from '@angular/router';
+import {RouterLink, Router} from '@angular/router';
 import {DatePipe} from '@angular/common';
 import {ResearchService, ResearchOverviewItem} from '../../../core/services/research.service';
 import { ResearchStatus } from '../../../core/models/research/research-status.model';
@@ -11,6 +11,7 @@ import { ResearchStatus } from '../../../core/models/research/research-status.mo
 })
 export default class DashboardPage implements OnInit {
   private researchService = inject(ResearchService);
+  private router = inject(Router);
 
   researchItems = signal<ResearchOverviewItem[]>([]);
   totalCount = signal<number>(0);
@@ -37,6 +38,10 @@ export default class DashboardPage implements OnInit {
     this.researchService.countResearch(filter).subscribe({
       next: (res) => this.totalCount.set(res.count)
     });
+  }
+
+  openResearch(id: string) {
+    this.router.navigate(['/account/research', id]);
   }
 
   delete(id: string) {
