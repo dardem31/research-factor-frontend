@@ -7,6 +7,7 @@ import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../
 import {ParameterField} from '../../../core/models/research/parameter-field.model';
 import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../core/dtos/research/param-draft.dto';
+import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
 
 import {ProjectTab} from './tabs/project-tab';
 import {LinesTab} from './tabs/lines-tab';
@@ -23,10 +24,11 @@ type TabKey = 'project' | 'lines' | 'groups' | 'review';
 })
 export default class ResearchDetailPage implements OnInit {
     private researchService = inject(ResearchService);
+    private lineApiService = inject(ResearchLineApiService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
-    editingId = signal<string | null>(null);
+editingId = signal<number | null>(null);
     isEditMode = computed(() => this.editingId() !== null);
 
     tab = signal<TabKey>('project');
@@ -73,6 +75,7 @@ export default class ResearchDetailPage implements OnInit {
 
     /** Cache for mapping IDs during save */
     private _loadedPrimaryOutcomes = signal<{id: number, text: string}[]>([]);
+    private _loadedProtocolId = signal<number>(0);
 
     // ── Computed mention sources (derived from groups + task artifacts) ──
     mentionableSubjects = computed<MentionableSubject[]>(() => {
@@ -116,12 +119,12 @@ export default class ResearchDetailPage implements OnInit {
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
-            this.editingId.set(id);
+            this.editingId.set(Number(id));
             this.loadProjectData(id);
         }
     }
 
-    loadProjectData(id: string) {
+    private loadProjectData(id: string) {
         this.researchService.getResearchById(id).subscribe({
             next: (dto) => {
                 this.title.set(dto.title);
@@ -130,6 +133,7 @@ export default class ResearchDetailPage implements OnInit {
                 this.blindingType.set(dto.blindingType);
 
                 if (dto.protocol) {
+                    this._loadedProtocolId.set(dto.protocol.id);
                     this.protocolPrimaryOutcome.set(dto.protocol.primaryOutcome || '');
                     this.protocolSampleSizeJustification.set(dto.protocol.sampleSizeJustification || '');
                     this.protocolStatisticalMethod.set(dto.protocol.statisticalMethod || '');
@@ -165,6 +169,18 @@ export default class ResearchDetailPage implements OnInit {
                         unit: p.unit
                     })));
                 }
+
+                // Load research lines
+                this.lineApiService.getResearchLinesByResearchId(Number(id)).subscribe(linesDto => {
+                    this.lines.set(linesDto.map(ld => ({
+                        id: ld.id,
+                    title: ld.title,
+                        description: '', // TODO: Add description to API if needed
+                        duration: ld.duration || '',
+                        stageQuestions: [], // These might need separate loading or DTO extension
+                        tasks: [] // These might need separate loading or DTO extension
+                    })));
+                });
             }
         });
     }
@@ -179,13 +195,13 @@ export default class ResearchDetailPage implements OnInit {
         if (this.isSaving()) return;
 
         const dto: ResearchDto = {
-            id: Number(this.editingId() ?? 0),
+            id: this.editingId() ?? 0,
             title: this.title(),
             hypothesis: this.hypothesis(),
             description: this.description(),
             blindingType: this.blindingType(),
             protocol: {
-                id: 0, // Backend typically handles protocol ID association
+                id: this._loadedProtocolId(),
                 primaryOutcome: this.protocolPrimaryOutcome(),
                 sampleSizeJustification: this.protocolSampleSizeJustification(),
                 statisticalMethod: this.protocolStatisticalMethod(),
@@ -222,24 +238,24 @@ export default class ResearchDetailPage implements OnInit {
                 next: () => {
                     this.isSaving.set(false);
                     // Refresh data to get any new IDs from server
-                    this.loadProjectData(this.editingId()!);
+                    this.loadProjectData(String(this.editingId()!));
                 },
                 error: () => this.isSaving.set(false)
             });
         } else {
             this.researchService.saveNewResearch(dto).subscribe({
                 next: (res) => {
-                    this.editingId.set(res.id);
+                    this.editingId.set(Number(res.id));
                     this.isSaving.set(false);
                     this.router.navigate(['/account/research', res.id], {replaceUrl: true});
                 },
                 error: () => this.isSaving.set(false)
             });
-        }
+}
     }
 
     onProjectSaved(id: string) {
-        this.editingId.set(id);
+        this.editingId.set(Number(id));
         // Move to next tab or stay on project? User didn't specify, but usually staying is safer.
         // However, the instructions say "включаем остальные табы и можем позволить юзеру продолжить работу"
     }
@@ -269,23 +285,24 @@ export default class ResearchDetailPage implements OnInit {
         const id = this.editingId();
 
         if (id) {
-            this.researchService.updateResearch(id, {
+            const idStr = String(id);
+            this.researchService.updateResearch(idStr, {
                 title: this.title(), hypothesis: this.hypothesis(), description: this.description(),
                 protocol, primaryOutcomes: this.primaryOutcomes(),
                 subjectGroups: groupsInput, trackedParameters: this.trackedParameters(),
             });
 
             // Reconcile lines
-            const existing = this.researchService.getById(id)!;
-            for (const line of existing.lines) this.researchService.removeLine(id, line.id);
+            const existing = this.researchService.getById(idStr)!;
+            for (const line of existing.lines) this.researchService.removeLine(idStr, line.id);
             for (const ld of this.lines()) {
-                const line = this.researchService.addLine(id, {
+                const line = this.researchService.addLine(idStr, {
                     title: ld.title,
                     description: ld.description,
                     duration: ld.duration,
                     stageQuestions: ld.stageQuestions
                 });
-                for (const td of ld.tasks) this.researchService.addTask(id, line.id, td.title);
+                for (const td of ld.tasks) this.researchService.addTask(idStr, line.id, td.title);
             }
         } else {
             const project = this.researchService.createResearch({

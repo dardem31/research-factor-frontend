@@ -1,90 +1,93 @@
 <div>
-  <!-- Tab bar + action buttons -->
-  <div class="mx-auto mb-8 flex max-w-4xl items-center border-b border-gray-200">
-    <div class="flex flex-1">
-      @for (t of tabs; track t.key) {
-        <button
-          class="cursor-pointer border-b-2 px-5 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
-          [class]="tab() === t.key
+    <!-- Tab bar + action buttons -->
+    <div class="mx-auto mb-8 flex max-w-4xl items-center border-b border-gray-200">
+        <div class="flex flex-1">
+            @for (t of tabs; track t.key) {
+                <button
+                        class="cursor-pointer border-b-2 px-5 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+                        [class]="tab() === t.key
             ? 'border-indigo-600 text-indigo-600'
             : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
-          (click)="tab.set(t.key)"
-          [disabled]="isTabDisabled(t.key)"
-        >
-          {{ t.label }}
-        </button>
-      }
+                        (click)="tab.set(t.key)"
+                        [disabled]="isTabDisabled(t.key)"
+                >
+                    {{ t.label }}
+                </button>
+            }
+        </div>
+        <div class="flex shrink-0 items-center gap-2 pb-px">
+            <button
+                    class="cursor-pointer rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                    (click)="cancel()"
+            >Отмена
+            </button>
+            <button
+                    class="cursor-pointer rounded-lg bg-green-600 px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
+                    (click)="submit()"
+            >{{ isEditMode() ? 'Сохранить' : 'Создать' }}
+            </button>
+        </div>
     </div>
-    <div class="flex shrink-0 items-center gap-2 pb-px">
-      <button
-        class="cursor-pointer rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-        (click)="cancel()"
-      >Отмена</button>
-      <button
-        class="cursor-pointer rounded-lg bg-green-600 px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
-        (click)="submit()"
-      >{{ isEditMode() ? 'Сохранить' : 'Создать' }}</button>
-    </div>
-  </div>
 
-  <!-- Tab content -->
-  @if (tab() === 'project') {
-    <rf-project-tab
-      [(title)]="title"
-      [(hypothesis)]="hypothesis"
-      [(description)]="description"
-      [(protocolPrimaryOutcome)]="protocolPrimaryOutcome"
-      [(protocolSampleSizeJustification)]="protocolSampleSizeJustification"
-      [(protocolStatisticalMethod)]="protocolStatisticalMethod"
-      [(protocolRandomizationMethod)]="protocolRandomizationMethod"
-      [(protocolBlindingDetails)]="protocolBlindingDetails"
-      [(protocolInterventionDescription)]="protocolInterventionDescription"
-      [(protocolInclusionCriteria)]="protocolInclusionCriteria"
-      [(protocolExclusionCriteria)]="protocolExclusionCriteria"
-      [(protocolEarlyStoppingCriteria)]="protocolEarlyStoppingCriteria"
-      [(primaryOutcomes)]="primaryOutcomes"
-      [(trackedParameters)]="trackedParameters"
-      [isEditMode]="isEditMode()"
-      [(isSaving)]="isSaving"
-      (save)="saveProject()"
-    />
-  }
+    <!-- Tab content -->
+    @if (tab() === 'project') {
+        <rf-project-tab
+                [(title)]="title"
+                [(hypothesis)]="hypothesis"
+                [(description)]="description"
+                [(protocolPrimaryOutcome)]="protocolPrimaryOutcome"
+                [(protocolSampleSizeJustification)]="protocolSampleSizeJustification"
+                [(protocolStatisticalMethod)]="protocolStatisticalMethod"
+                [(protocolRandomizationMethod)]="protocolRandomizationMethod"
+                [(protocolBlindingDetails)]="protocolBlindingDetails"
+                [(protocolInterventionDescription)]="protocolInterventionDescription"
+                [(protocolInclusionCriteria)]="protocolInclusionCriteria"
+                [(protocolExclusionCriteria)]="protocolExclusionCriteria"
+                [(protocolEarlyStoppingCriteria)]="protocolEarlyStoppingCriteria"
+                [(primaryOutcomes)]="primaryOutcomes"
+                [(trackedParameters)]="trackedParameters"
+                [isEditMode]="isEditMode()"
+                [(isSaving)]="isSaving"
+                (save)="saveProject()"
+        />
+    }
 
-  @if (tab() === 'lines') {
-    <rf-lines-tab
-      [(lines)]="lines"
-      [subjects]="mentionableSubjects()"
-      [mentionableArtifacts]="mentionableArtifacts()"
-      [trackedParameters]="trackedParameterInfos()"
-    />
-  }
+    @if (tab() === 'lines') {
+        <rf-lines-tab
+                [researchId]="this.editingId() ?? 0"
+                [(lines)]="lines"
+                [subjects]="mentionableSubjects()"
+                [mentionableArtifacts]="mentionableArtifacts()"
+                [trackedParameters]="trackedParameterInfos()"
+        />
+    }
 
-  @if (tab() === 'groups') {
-    <rf-groups-tab
-      [(groups)]="groups"
-      [trackedParameters]="trackedParameters()"
-    />
-  }
+    @if (tab() === 'groups') {
+        <rf-groups-tab
+                [(groups)]="groups"
+                [trackedParameters]="trackedParameters()"
+        />
+    }
 
-  @if (tab() === 'review') {
-    <rf-review-tab
-      [title]="title()"
-      [hypothesis]="hypothesis()"
-      [description]="description()"
-      [protocolPrimaryOutcome]="protocolPrimaryOutcome()"
-      [protocolSampleSizeJustification]="protocolSampleSizeJustification()"
-      [protocolStatisticalMethod]="protocolStatisticalMethod()"
-      [protocolRandomizationMethod]="protocolRandomizationMethod()"
-      [protocolBlindingDetails]="protocolBlindingDetails()"
-      [protocolInterventionDescription]="protocolInterventionDescription()"
-      [protocolInclusionCriteria]="protocolInclusionCriteria()"
-      [protocolExclusionCriteria]="protocolExclusionCriteria()"
-      [protocolEarlyStoppingCriteria]="protocolEarlyStoppingCriteria()"
-      [primaryOutcomes]="primaryOutcomes()"
-      [trackedParameters]="trackedParameters()"
-      [lines]="lines()"
-      [groups]="groups()"
-      [isEditMode]="isEditMode()"
-    />
-  }
+    @if (tab() === 'review') {
+        <rf-review-tab
+                [title]="title()"
+                [hypothesis]="hypothesis()"
+                [description]="description()"
+                [protocolPrimaryOutcome]="protocolPrimaryOutcome()"
+                [protocolSampleSizeJustification]="protocolSampleSizeJustification()"
+                [protocolStatisticalMethod]="protocolStatisticalMethod()"
+                [protocolRandomizationMethod]="protocolRandomizationMethod()"
+                [protocolBlindingDetails]="protocolBlindingDetails()"
+                [protocolInterventionDescription]="protocolInterventionDescription()"
+                [protocolInclusionCriteria]="protocolInclusionCriteria()"
+                [protocolExclusionCriteria]="protocolExclusionCriteria()"
+                [protocolEarlyStoppingCriteria]="protocolEarlyStoppingCriteria()"
+                [primaryOutcomes]="primaryOutcomes()"
+                [trackedParameters]="trackedParameters()"
+                [lines]="lines()"
+                [groups]="groups()"
+                [isEditMode]="isEditMode()"
+        />
+    }
 </div>

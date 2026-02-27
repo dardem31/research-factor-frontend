@@ -5,10 +5,20 @@ import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../
 @Component({
   standalone: true,
   selector: 'rf-lines-tab',
-  template: '<rf-lines-board [lines]="lines()" (linesChange)="lines.set($event)" [subjects]="subjects()" [mentionableArtifacts]="mentionableArtifacts()" [trackedParameters]="trackedParameters()" />',
+  template: `
+    <rf-lines-board
+      [researchId]="researchId()"
+      [lines]="lines()"
+      (linesChange)="lines.set($event)"
+      [subjects]="subjects()"
+      [mentionableArtifacts]="mentionableArtifacts()"
+      [trackedParameters]="trackedParameters()"
+    />
+  `,
   imports: [LinesBoard],
 })
 export class LinesTab {
+  researchId = input.required<number>();
   lines = model.required<LineDraft[]>();
   subjects = input<MentionableSubject[]>([]);
   mentionableArtifacts = input<MentionableArtifact[]>([]);
