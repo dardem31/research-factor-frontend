@@ -5,7 +5,7 @@ import {ResearchCrudService} from './research/research-crud.service';
 import {ResearchLinesService} from './research/research-lines.service';
 import type {ResearchFilterDto} from '../dtos/research/research-filter.dto';
 import type {ResearchDto} from '../dtos/research/research.dto';
-import type {CreateResearchInput, UpdateResearchInput, AddLineInput} from '../dtos/research/research-inputs.dto';
+import type {CreateResearchInput, UpdateResearchInput} from '../dtos/research/research-inputs.dto';
 
 // Re-export types for convenience
 export type {BlindingType, ResearchDto} from '../dtos/research/research.dto';
@@ -67,12 +67,6 @@ export class ResearchService {
     submitForReview(id: string) {
         return this.crud.submitForReview(id);
     }
-
-    // ── Lines & Tasks ──
-    addLine(projectId: string, input: AddLineInput) {
-        return this.lines.addLine(projectId, input);
-    }
-
     removeLine(projectId: string, lineId: string) {
         return this.lines.removeLine(projectId, lineId);
     }

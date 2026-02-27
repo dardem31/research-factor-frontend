@@ -32,10 +32,3 @@ export interface UpdateResearchInput {
   subjectGroups: SubjectGroupInput[];
   trackedParameters: { name: string; unit: string }[];
 }
-
-export interface AddLineInput {
-  title: string;
-  description: string;
-  duration: string;
-  stageQuestions: string[];
-}

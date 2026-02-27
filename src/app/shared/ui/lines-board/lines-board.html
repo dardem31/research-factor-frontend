@@ -196,10 +196,10 @@
 
       @if (line.stageQuestions.length > 0) {
         <ul class="mt-4 space-y-2">
-          @for (q of line.stageQuestions; track $index; let j = $index) {
+          @for (q of line.stageQuestions; track q.id || $index; let j = $index) {
             <li class="flex items-start justify-between gap-2 rounded-lg bg-gray-50 px-4 py-2.5">
-              <span class="text-sm text-gray-700">{{ q }}</span>
-              @if (!readonly()) {
+              <span class="text-sm text-gray-700">{{ q.text }}</span>
+              @if (!readonly() && q.status === 'DRAFT') {
                 <button
                   class="cursor-pointer shrink-0 rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                   (click)="removeStageQuestion(j)"

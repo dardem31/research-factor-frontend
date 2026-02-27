@@ -5,6 +5,8 @@ import {TaskDraft} from '../../../core/dtos/lines/task-draft.dto';
 import {LineDraft} from '../../../core/dtos/lines/line-draft.dto';
 import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
 import {ResearchLineDto} from '../../../core/dtos/research/research-line.dto';
+import {StageQuestionApiService} from '../../../core/services/research/stage-question-api.service';
+import {StageQuestionDto} from '../../../core/dtos/research/stage-question.dto';
 
 export type {LineDraft, TaskDraft};
 
@@ -18,6 +20,7 @@ type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 })
 export class LinesBoard {
     private lineApiService = inject(ResearchLineApiService);
+    private stageQuestionApiService = inject(StageQuestionApiService);
 
     /** Two-way bound lines data — parent owns the source of truth */
     lines = model.required<LineDraft[]>();
@@ -50,7 +53,7 @@ export class LinesBoard {
 
     // ════════════════ Lines (columns) ════════════════
 
-    addLine() {
+addLine() {
         const newOrder = this.lines().length + 1;
         const dto: ResearchLineDto = {
             researchId: this.researchId(),
@@ -135,31 +138,62 @@ export class LinesBoard {
     // ════════════════ Modal: Stage Questions ════════════════
 
     openStageQuestions(lineIndex: number) {
+        const line = this.lines()[lineIndex];
         this.activeLineIndex.set(lineIndex);
         this.newQuestionText = '';
         this.modal.set('stageQuestions');
+
+        // Load fresh questions from backend for this line
+        if (line.id) {
+            this.stageQuestionApiService.getStageQuestionsByResearchLineId(line.id).subscribe(questions => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === lineIndex ? {...l, stageQuestions: questions} : l
+                    )
+                );
+            });
+        }
     }
 
     addStageQuestion() {
         const text = this.newQuestionText.trim();
         if (!text) return;
         const i = this.activeLineIndex();
+        const line = this.lines()[i];
+
+        if (line.id) {
+            const dto: StageQuestionDto = {
+                researchLineId: line.id,
+                text: text,
+                status: 'DRAFT'
+            };
+
+            this.stageQuestionApiService.createStageQuestion(dto).subscribe(saved => {
         this.lines.update(list =>
             list.map((l, idx) =>
-                idx === i ? {...l, stageQuestions: [...l.stageQuestions, text]} : l
+                        idx === i ? {...l, stageQuestions: [...l.stageQuestions, saved]} : l
             )
         );
-        this.newQuestionText = '';
+                this.newQuestionText = '';
+            });
+    }
     }
 
     removeStageQuestion(qIndex: number) {
         const i = this.activeLineIndex();
-        this.lines.update(list =>
-            list.map((l, idx) =>
-                idx === i ? {...l, stageQuestions: l.stageQuestions.filter((_, j) => j !== qIndex)} : l
-            )
-        );
+        const line = this.lines()[i];
+        const question = line.stageQuestions[qIndex];
+
+        if (question.id) {
+            this.stageQuestionApiService.deleteStageQuestion(question.id).subscribe(() => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === i ? {...l, stageQuestions: l.stageQuestions.filter((_, j) => j !== qIndex)} : l
+                    )
+                );
+            });
     }
+}
 
     // ════════════════ Tasks ════════════════
 
