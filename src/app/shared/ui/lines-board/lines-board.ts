@@ -1,4 +1,4 @@
-import {Component, inject, input, model, signal} from '@angular/core';
+import {Component, inject, input, model, signal, effect} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {TaskModal, MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../task-modal/task-modal';
 import {TaskDraft} from '../../../core/dtos/lines/task-draft.dto';
@@ -7,6 +7,8 @@ import {ResearchLineApiService} from '../../../core/services/research/research-l
 import {ResearchLineDto} from '../../../core/dtos/research/research-line.dto';
 import {StageQuestionApiService} from '../../../core/services/research/stage-question-api.service';
 import {StageQuestionDto} from '../../../core/dtos/research/stage-question.dto';
+import {ResearchTaskApiService} from '../../../core/services/research/research-task-api.service';
+import {ResearchTaskDto} from '../../../core/dtos/research/research-task.dto';
 
 export type {LineDraft, TaskDraft};
 
@@ -21,6 +23,7 @@ type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 export class LinesBoard {
     private lineApiService = inject(ResearchLineApiService);
     private stageQuestionApiService = inject(StageQuestionApiService);
+    private taskApiService = inject(ResearchTaskApiService);
 
     /** Two-way bound lines data — parent owns the source of truth */
     lines = model.required<LineDraft[]>();
@@ -39,6 +42,21 @@ export class LinesBoard {
     /** Tracked parameters for subject update panel */
     trackedParameters = input<TrackedParameterInfo[]>([]);
 
+    constructor() {
+        // Automatically fetch tasks and questions when lines are first set
+        effect(() => {
+            const currentLines = this.lines();
+            // We only want to trigger this if we have lines but they don't have tasks/questions loaded yet
+            // Or specifically when the researchId changes/initially loads
+            const needsRefresh = currentLines.length > 0 &&
+                currentLines.every(l => l.tasks.length === 0 && l.stageQuestions.length === 0);
+
+            if (needsRefresh) {
+                this.refreshAllLinesData();
+            }
+        });
+    }
+
     // ── Modal state ──
     modal = signal<ModalType>('none');
     activeLineIndex = signal(-1);
@@ -53,7 +71,7 @@ export class LinesBoard {
 
     // ════════════════ Lines (columns) ════════════════
 
-addLine() {
+    addLine() {
         const newOrder = this.lines().length + 1;
         const dto: ResearchLineDto = {
             researchId: this.researchId(),
@@ -89,6 +107,37 @@ addLine() {
             this.lines.update(list => list.filter((_, i) => i !== index));
             this.closeModal();
         }
+    }
+
+    refreshAllLinesData() {
+        const currentLines = this.lines();
+        currentLines.forEach((line, index) => {
+            if (line.id) {
+                this.stageQuestionApiService.getStageQuestionsByResearchLineId(line.id).subscribe(questions => {
+                    this.lines.update(list =>
+                        list.map((l, idx) =>
+                            idx === index ? {...l, stageQuestions: questions} : l
+                        )
+                    );
+                });
+                this.taskApiService.getResearchTasksByResearchLineId(line.id).subscribe(tasks => {
+                    this.lines.update(list =>
+                        list.map((l, idx) =>
+                            idx === index
+                                ? {
+                                    ...l,
+                                    tasks: tasks.map(t => ({
+                                        ...t,
+                                        logEntries: [],
+                                        artifacts: []
+                                    }))
+                                }
+                                : l
+                        )
+                    );
+                });
+            }
+        });
     }
 
     // ════════════════ Modal: Edit Line ════════════════
@@ -169,14 +218,14 @@ addLine() {
             };
 
             this.stageQuestionApiService.createStageQuestion(dto).subscribe(saved => {
-        this.lines.update(list =>
-            list.map((l, idx) =>
+                this.lines.update(list =>
+                    list.map((l, idx) =>
                         idx === i ? {...l, stageQuestions: [...l.stageQuestions, saved]} : l
-            )
-        );
+                    )
+                );
                 this.newQuestionText = '';
             });
-    }
+        }
     }
 
     removeStageQuestion(qIndex: number) {
@@ -192,8 +241,8 @@ addLine() {
                     )
                 );
             });
+        }
     }
-}
 
     // ════════════════ Tasks ════════════════
 
@@ -201,32 +250,95 @@ addLine() {
         if (this.readonly()) return;
         const text = this.newTaskTitle.trim();
         if (!text) return;
-        this.lines.update(list =>
-            list.map((l, idx) =>
-                idx === lineIndex
-                    ? {...l, tasks: [...l.tasks, {title: text, description: '', logEntries: [], artifacts: []}]}
-                    : l
-            )
-        );
-        this.newTaskTitle = '';
+
+        const line = this.lines()[lineIndex];
+        if (line.id) {
+            const dto: ResearchTaskDto = {
+                researchLineId: line.id,
+                title: text,
+                description: '',
+                status: 'OPEN'
+            };
+
+            this.taskApiService.createResearchTask(dto).subscribe(saved => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === lineIndex
+                            ? {
+                                ...l, tasks: [...l.tasks, {
+                                    id: saved.id,
+                                    title: saved.title,
+                                    description: saved.description,
+                                    logEntries: [],
+                                    artifacts: [],
+                                    status: saved.status
+                                }]
+                            }
+                            : l
+                    )
+                );
+                this.newTaskTitle = '';
+            });
+        }
     }
 
     removeTask(lineIndex: number, taskIndex: number) {
         if (this.readonly()) return;
-        this.lines.update(list =>
-            list.map((l, idx) =>
-                idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
-            )
-        );
-        this.closeModal();
+        const line = this.lines()[lineIndex];
+        const task = line.tasks[taskIndex];
+
+        if (task.id) {
+            this.taskApiService.deleteResearchTask(task.id).subscribe(() => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
+                    )
+                );
+                this.closeModal();
+            });
+        } else {
+            this.lines.update(list =>
+                list.map((l, idx) =>
+                    idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
+                )
+            );
+            this.closeModal();
+        }
     }
 
     // ════════════════ Modal: Edit Task ════════════════
 
     openEditTask(lineIndex: number, taskIndex: number) {
+        const line = this.lines()[lineIndex];
         this.activeLineIndex.set(lineIndex);
-        this.activeTaskIndex.set(taskIndex);
-        this.modal.set('editTask');
+
+        // Load fresh tasks for this line to ensure we have latest data
+        if (line.id) {
+            this.taskApiService.getResearchTasksByResearchLineId(line.id).subscribe(tasks => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === lineIndex
+                            ? {
+                                ...l,
+                                tasks: tasks.map(t => {
+                                    const existing = l.tasks.find(et => et.id === t.id);
+                                    return {
+                                        ...t,
+                                        logEntries: existing?.logEntries || [],
+                                        artifacts: existing?.artifacts || []
+                                    };
+                                })
+                            }
+                            : l
+                    )
+                );
+                this.activeTaskIndex.set(taskIndex);
+                this.modal.set('editTask');
+            });
+        } else {
+            this.activeTaskIndex.set(taskIndex);
+            this.modal.set('editTask');
+        }
     }
 
     activeTask(): TaskDraft | null {
@@ -239,13 +351,28 @@ addLine() {
     onTaskSave(updated: TaskDraft) {
         const li = this.activeLineIndex();
         const ti = this.activeTaskIndex();
-        this.lines.update(list =>
-            list.map((l, idx) =>
-                idx === li
-                    ? {...l, tasks: l.tasks.map((t, j) => (j === ti ? updated : t))}
-                    : l
-            )
-        );
+        const line = this.lines()[li];
+
+        if (updated.id && line.id) {
+            const dto: ResearchTaskDto = {
+                id: updated.id,
+                researchLineId: line.id,
+                title: updated.title,
+                description: updated.description,
+                status: updated.status || 'OPEN'
+            };
+
+            this.taskApiService.updateResearchTask(dto).subscribe(saved => {
+                this.lines.update(list =>
+                    list.map((l, idx) =>
+                        idx === li
+                            ? {...l, tasks: l.tasks.map((t, j) => j === ti ? {...updated, ...saved} : t)}
+                            : l
+                    )
+                );
+            });
+        }
+
         this.closeModal();
     }
 

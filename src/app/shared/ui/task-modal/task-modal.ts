@@ -369,6 +369,7 @@ export class TaskModal implements OnInit {
 
   onSave() {
     this.save.emit({
+      ...this.task(),
       title: this.editTitle.trim() || this.task().title,
       description: this.editDescription,
       logEntries: this.editLogEntries,
