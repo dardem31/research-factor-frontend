@@ -1,16 +1,18 @@
-import {Component, input, output, signal, computed, OnInit, ElementRef, ViewChild} from '@angular/core';
+import {Component, input, output, signal, computed, OnInit, ElementRef, ViewChild, inject} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
 import {LogEntry, ParameterChange, SubjectUpdate} from '../../../core/models/research/log-entry.model';
 import {Artifact, ArtifactType} from '../../../core/models/research/artifact.model';
-import {TaskData} from '../../../core/dtos/task/task-data.dto';
+import {ResearchTaskDto} from '../../../core/dtos/research/research-task.dto';
 import {MentionableSubject} from '../../../core/dtos/task/mentionable-subject.dto';
 import {MentionableArtifact} from '../../../core/dtos/task/mentionable-artifact.dto';
 import {TrackedParameterInfo} from '../../../core/dtos/task/tracked-parameter-info.dto';
 import {PendingSubjectUpdate} from '../../../core/dtos/task/pending-subject-update.dto';
 import {PendingParamEdit} from '../../../core/dtos/task/pending-param-edit.dto';
+import {ArtifactApiService} from '../../../core/services/research/artifact-api.service';
+import {ArtifactDto} from '../../../core/dtos/research/artifact.dto';
 
-export type { TaskData, MentionableSubject, MentionableArtifact, TrackedParameterInfo, PendingSubjectUpdate, PendingParamEdit };
+export type { MentionableSubject, MentionableArtifact, TrackedParameterInfo, PendingSubjectUpdate, PendingParamEdit };
 
 interface MentionItem {
   type: 'subject' | 'artifact';
@@ -25,8 +27,10 @@ interface MentionItem {
   imports: [FormsModule, DatePipe],
 })
 export class TaskModal implements OnInit {
+  private artifactApiService = inject(ArtifactApiService);
+
   /** The task to display/edit */
-  task = input.required<TaskData>();
+  task = input.required<ResearchTaskDto>();
 
   /** Read-only mode — no editing allowed */
   readonly = input(false);
@@ -41,7 +45,7 @@ export class TaskModal implements OnInit {
   trackedParameters = input<TrackedParameterInfo[]>([]);
 
   /** Emitted when user saves changes */
-  save = output<TaskData>();
+  save = output<ResearchTaskDto>();
 
   /** Emitted when user deletes the task */
   delete = output<void>();
@@ -94,8 +98,22 @@ export class TaskModal implements OnInit {
     const t = this.task();
     this.editTitle = t.title;
     this.editDescription = t.description;
-    this.editLogEntries = [...t.logEntries];
-    this.editArtifacts = [...t.artifacts];
+    this.editLogEntries = [...(t.logEntries ?? [])];
+    this.editArtifacts = [...(t.artifacts ?? [])];
+
+    // Fetch artifacts from backend if task exists
+    if (t.id) {
+        this.artifactApiService.getArtifactsByTaskId(Number(t.id)).subscribe(artifacts => {
+            this.editArtifacts = artifacts.map(a => ({
+                id: String(a.id),
+                type: a.type as ArtifactType,
+                fileName: a.storageUrl || 'Unnamed Artifact', // ArtifactDto doesn't have fileName, using storageUrl
+                storageUrl: a.storageUrl || '',
+                sha256: a.sha256 || '',
+                metadata: a.metadata ? JSON.parse(a.metadata) : {}
+            }));
+        });
+    }
   }
 
   // ── Mention logic ──
@@ -121,7 +139,6 @@ export class TaskModal implements OnInit {
         return;
       }
     }
-
     this.closeMention();
   }
 
@@ -249,7 +266,6 @@ export class TaskModal implements OnInit {
       this.pendingSubjectUpdates.set(filtered);
     }
   }
-
   // ── Logs ──
 
   addLog() {
@@ -319,31 +335,50 @@ export class TaskModal implements OnInit {
     if (this.readonly()) return;
     this.editLogEntries = this.editLogEntries.filter((_, i) => i !== index);
   }
-
   // ── Artifacts ──
 
   addArtifact() {
     if (this.readonly()) return;
     const name = this.newArtifactName.trim();
     if (!name) return;
-    this.editArtifacts = [
-      ...this.editArtifacts,
-      {
-        id: crypto.randomUUID(),
-        type: this.newArtifactType,
-        fileName: name,
-        storageUrl: '',
-        sha256: '',
-        metadata: {},
-      },
-    ];
-    this.newArtifactName = '';
-    this.newArtifactType = 'RAW_DATA';
+    const taskId = this.task().id;
+
+    if (taskId) {
+        const dto: ArtifactDto = {
+            taskId: taskId,
+            type: this.newArtifactType,
+            storageUrl: name // Map name to storageUrl or similar logic for now
+        };
+
+        this.artifactApiService.createArtifact(dto).subscribe(saved => {
+            this.editArtifacts = [
+                ...this.editArtifacts,
+                {
+                    id: String(saved.id),
+                    type: saved.type as ArtifactType,
+                    fileName: saved.storageUrl || name,
+                    storageUrl: saved.storageUrl || '',
+                    sha256: saved.sha256 || '',
+                    metadata: {}
+                }
+            ];
+            this.newArtifactName = '';
+            this.newArtifactType = 'RAW_DATA';
+        });
+    }
   }
 
   removeArtifact(index: number) {
     if (this.readonly()) return;
-    this.editArtifacts = this.editArtifacts.filter((_, i) => i !== index);
+    const artifact = this.editArtifacts[index];
+
+    if (artifact.id && !artifact.id.includes('-')) { // Assuming UUIDs have hyphens and DB IDs don't
+        this.artifactApiService.deleteArtifact(Number(artifact.id)).subscribe(() => {
+            this.editArtifacts = this.editArtifacts.filter((_, i) => i !== index);
+        });
+    } else {
+        this.editArtifacts = this.editArtifacts.filter((_, i) => i !== index);
+    }
   }
 
   artifactTypeIcon(type: ArtifactType): string {

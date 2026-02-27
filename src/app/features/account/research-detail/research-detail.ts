@@ -2,7 +2,7 @@ import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ResearchService, ResearchDto, BlindingType} from '../../../core/services/research.service';
 import {Research} from '../../../core/models/research/research.model';
-import {LineDraft} from '../../../shared/ui/lines-board/lines-board';
+import {ResearchLineDto} from '../../../core/dtos/research/research-line.dto';
 import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../../../shared/ui/task-modal/task-modal';
 import {ParameterField} from '../../../core/models/research/parameter-field.model';
 import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
@@ -64,7 +64,7 @@ editingId = signal<number | null>(null);
 
     primaryOutcomes = signal<string[]>([]);
     trackedParameters = signal<ParamDraft[]>([]);
-    lines = signal<LineDraft[]>([]);
+    lines = signal<ResearchLineDto[]>([]);
     groups = signal<GroupDraft[]>([]);
 
     /** Full tracked parameter data with IDs, preserved from loaded project */
@@ -96,8 +96,8 @@ editingId = signal<number | null>(null);
 
     mentionableArtifacts = computed<MentionableArtifact[]>(() =>
         this.lines().flatMap(l =>
-            l.tasks.flatMap(t =>
-                t.artifacts.map(a => ({id: a.id, fileName: a.fileName}))
+            (l.tasks ?? []).flatMap(t =>
+                (t.artifacts ?? []).map(a => ({id: a.id, fileName: a.fileName}))
             )
         )
     );
@@ -173,12 +173,10 @@ editingId = signal<number | null>(null);
                 // Load research lines
                 this.lineApiService.getResearchLinesByResearchId(Number(id)).subscribe(linesDto => {
                     this.lines.set(linesDto.map(ld => ({
-                        id: ld.id,
-                    title: ld.title,
-                        description: '', // TODO: Add description to API if needed
-                        duration: ld.duration || '',
-                        stageQuestions: [], // These might need separate loading or DTO extension
-                        tasks: [] // These might need separate loading or DTO extension
+                        ...ld,
+                        description: ld.description ?? '',
+                        stageQuestions: [],
+                        tasks: []
                     })));
                 });
             }

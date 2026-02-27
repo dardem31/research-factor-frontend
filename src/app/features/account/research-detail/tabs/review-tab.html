@@ -62,8 +62,8 @@
             <p class="text-sm font-medium text-gray-800">{{ line.title }}</p>
             <div class="mt-1 flex gap-3 text-xs text-gray-500">
               @if (line.duration) { <span>Duration: {{ line.duration }}</span> }
-              <span>Stage Questions: {{ line.stageQuestions.length }}</span>
-              <span>Tasks: {{ line.tasks.length }}</span>
+              <span>Stage Questions: {{ (line.stageQuestions ?? []).length }}</span>
+              <span>Tasks: {{ (line.tasks ?? []).length }}</span>
             </div>
           </div>
         }

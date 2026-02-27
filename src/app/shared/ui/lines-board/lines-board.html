@@ -71,8 +71,8 @@
               (click)="openStageQuestions(i)"
             >
               Stage Questions
-              @if (line.stageQuestions.length > 0) {
-                <span class="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">{{ line.stageQuestions.length }}</span>
+              @if ((line.stageQuestions ?? []).length > 0) {
+                <span class="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">{{ line.stageQuestions!.length }}</span>
               }
             </button>
           </div>
@@ -80,7 +80,7 @@
 
         <!-- Tasks list -->
         <div class="flex-1 space-y-2 overflow-y-auto p-3" style="max-height: 400px">
-          @for (task of line.tasks; track $index; let k = $index) {
+          @for (task of (line.tasks ?? []); track $index; let k = $index) {
             <button
               class="w-full cursor-pointer rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
               (click)="openEditTask(i, k)"
@@ -92,13 +92,13 @@
               @if (task.description) {
                 <p class="mt-1 line-clamp-2 text-xs text-gray-500">{{ task.description }}</p>
               }
-              @if (task.logEntries.length > 0 || task.artifacts.length > 0) {
+              @if ((task.logEntries ?? []).length > 0 || (task.artifacts ?? []).length > 0) {
                 <div class="mt-2 flex gap-3 text-[10px] text-gray-400">
-                  @if (task.logEntries.length > 0) {
-                    <span>📝 {{ task.logEntries.length }}</span>
+                  @if ((task.logEntries ?? []).length > 0) {
+                    <span>📝 {{ task.logEntries!.length }}</span>
                   }
-                  @if (task.artifacts.length > 0) {
-                    <span>📂 {{ task.artifacts.length }}</span>
+                  @if ((task.artifacts ?? []).length > 0) {
+                    <span>📂 {{ task.artifacts!.length }}</span>
                   }
                 </div>
               }
@@ -194,9 +194,9 @@
       <h3 class="text-lg font-bold text-gray-900">Stage Questions — {{ line.title }}</h3>
       <p class="mt-1 text-sm text-gray-500">Вопросы, на которые эта фаза должна ответить. После утверждения их нельзя изменить.</p>
 
-      @if (line.stageQuestions.length > 0) {
+      @if ((line.stageQuestions ?? []).length > 0) {
         <ul class="mt-4 space-y-2">
-          @for (q of line.stageQuestions; track q.id || $index; let j = $index) {
+          @for (q of (line.stageQuestions ?? []); track q.id || $index; let j = $index) {
             <li class="flex items-start justify-between gap-2 rounded-lg bg-gray-50 px-4 py-2.5">
               <span class="text-sm text-gray-700">{{ q.text }}</span>
               @if (!readonly() && q.status === 'DRAFT') {

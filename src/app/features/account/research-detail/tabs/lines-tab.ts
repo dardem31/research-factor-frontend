@@ -1,5 +1,6 @@
 import {Component, input, model} from '@angular/core';
-import {LinesBoard, LineDraft} from '../../../../shared/ui/lines-board/lines-board';
+import {LinesBoard} from '../../../../shared/ui/lines-board/lines-board';
+import {ResearchLineDto} from '../../../../core/dtos/research/research-line.dto';
 import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../../../../shared/ui/task-modal/task-modal';
 
 @Component({
@@ -19,7 +20,7 @@ import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../
 })
 export class LinesTab {
   researchId = input.required<number>();
-  lines = model.required<LineDraft[]>();
+  lines = model.required<ResearchLineDto[]>();
   subjects = input<MentionableSubject[]>([]);
   mentionableArtifacts = input<MentionableArtifact[]>([]);
   trackedParameters = input<TrackedParameterInfo[]>([]);

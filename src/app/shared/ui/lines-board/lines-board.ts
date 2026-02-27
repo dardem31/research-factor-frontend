@@ -1,16 +1,12 @@
 import {Component, inject, input, model, signal, effect} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {TaskModal, MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../task-modal/task-modal';
-import {TaskDraft} from '../../../core/dtos/lines/task-draft.dto';
-import {LineDraft} from '../../../core/dtos/lines/line-draft.dto';
 import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
 import {ResearchLineDto} from '../../../core/dtos/research/research-line.dto';
 import {StageQuestionApiService} from '../../../core/services/research/stage-question-api.service';
 import {StageQuestionDto} from '../../../core/dtos/research/stage-question.dto';
 import {ResearchTaskApiService} from '../../../core/services/research/research-task-api.service';
 import {ResearchTaskDto} from '../../../core/dtos/research/research-task.dto';
-
-export type {LineDraft, TaskDraft};
 
 type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 
@@ -26,7 +22,7 @@ export class LinesBoard {
     private taskApiService = inject(ResearchTaskApiService);
 
     /** Two-way bound lines data — parent owns the source of truth */
-    lines = model.required<LineDraft[]>();
+    lines = model.required<ResearchLineDto[]>();
 
     researchId = input.required<number>();
 
@@ -49,7 +45,7 @@ export class LinesBoard {
             // We only want to trigger this if we have lines but they don't have tasks/questions loaded yet
             // Or specifically when the researchId changes/initially loads
             const needsRefresh = currentLines.length > 0 &&
-                currentLines.every(l => l.tasks.length === 0 && l.stageQuestions.length === 0);
+                currentLines.every(l => (l.tasks ?? []).length === 0 && (l.stageQuestions ?? []).length === 0);
 
             if (needsRefresh) {
                 this.refreshAllLinesData();
@@ -82,11 +78,9 @@ export class LinesBoard {
         };
 
         this.lineApiService.createResearchLine(dto).subscribe(saved => {
-            const newLine: LineDraft = {
-                id: saved.id,
-                title: saved.title,
+            const newLine: ResearchLineDto = {
+                ...saved,
                 description: '',
-                duration: saved.duration || '',
                 stageQuestions: [],
                 tasks: []
             };
@@ -126,11 +120,14 @@ export class LinesBoard {
                             idx === index
                                 ? {
                                     ...l,
-                                    tasks: tasks.map(t => ({
-                                        ...t,
-                                        logEntries: [],
-                                        artifacts: []
-                                    }))
+                                    tasks: tasks.map(t => {
+                                        const existing = (l.tasks ?? []).find(et => et.id === t.id);
+                                        return {
+                                            ...t,
+                                            logEntries: existing?.logEntries ?? [],
+                                            artifacts: existing?.artifacts ?? []
+                                        };
+                                    })
                                 }
                                 : l
                         )
@@ -146,8 +143,8 @@ export class LinesBoard {
         const line = this.lines()[lineIndex];
         this.activeLineIndex.set(lineIndex);
         this.editLineTitle = line.title;
-        this.editLineDescription = line.description;
-        this.editLineDuration = line.duration;
+        this.editLineDescription = line.description ?? '';
+        this.editLineDuration = line.duration ?? '';
         this.modal.set('editLine');
     }
 
@@ -220,7 +217,7 @@ export class LinesBoard {
             this.stageQuestionApiService.createStageQuestion(dto).subscribe(saved => {
                 this.lines.update(list =>
                     list.map((l, idx) =>
-                        idx === i ? {...l, stageQuestions: [...l.stageQuestions, saved]} : l
+                        idx === i ? {...l, stageQuestions: [...(l.stageQuestions ?? []), saved]} : l
                     )
                 );
                 this.newQuestionText = '';
@@ -231,13 +228,13 @@ export class LinesBoard {
     removeStageQuestion(qIndex: number) {
         const i = this.activeLineIndex();
         const line = this.lines()[i];
-        const question = line.stageQuestions[qIndex];
+        const question = (line.stageQuestions ?? [])[qIndex];
 
-        if (question.id) {
+        if (question?.id) {
             this.stageQuestionApiService.deleteStageQuestion(question.id).subscribe(() => {
                 this.lines.update(list =>
                     list.map((l, idx) =>
-                        idx === i ? {...l, stageQuestions: l.stageQuestions.filter((_, j) => j !== qIndex)} : l
+                        idx === i ? {...l, stageQuestions: (l.stageQuestions ?? []).filter((_, j) => j !== qIndex)} : l
                     )
                 );
             });
@@ -265,13 +262,10 @@ export class LinesBoard {
                     list.map((l, idx) =>
                         idx === lineIndex
                             ? {
-                                ...l, tasks: [...l.tasks, {
-                                    id: saved.id,
-                                    title: saved.title,
-                                    description: saved.description,
+                                ...l, tasks: [...(l.tasks ?? []), {
+                                    ...saved,
                                     logEntries: [],
-                                    artifacts: [],
-                                    status: saved.status
+                                    artifacts: []
                                 }]
                             }
                             : l
@@ -285,13 +279,13 @@ export class LinesBoard {
     removeTask(lineIndex: number, taskIndex: number) {
         if (this.readonly()) return;
         const line = this.lines()[lineIndex];
-        const task = line.tasks[taskIndex];
+        const task = (line.tasks ?? [])[taskIndex];
 
-        if (task.id) {
+        if (task?.id) {
             this.taskApiService.deleteResearchTask(task.id).subscribe(() => {
                 this.lines.update(list =>
                     list.map((l, idx) =>
-                        idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
+                        idx === lineIndex ? {...l, tasks: (l.tasks ?? []).filter((_, j) => j !== taskIndex)} : l
                     )
                 );
                 this.closeModal();
@@ -299,7 +293,7 @@ export class LinesBoard {
         } else {
             this.lines.update(list =>
                 list.map((l, idx) =>
-                    idx === lineIndex ? {...l, tasks: l.tasks.filter((_, j) => j !== taskIndex)} : l
+                    idx === lineIndex ? {...l, tasks: (l.tasks ?? []).filter((_, j) => j !== taskIndex)} : l
                 )
             );
             this.closeModal();
@@ -321,11 +315,11 @@ export class LinesBoard {
                             ? {
                                 ...l,
                                 tasks: tasks.map(t => {
-                                    const existing = l.tasks.find(et => et.id === t.id);
+                                    const existing = (l.tasks ?? []).find(et => et.id === t.id);
                                     return {
                                         ...t,
-                                        logEntries: existing?.logEntries || [],
-                                        artifacts: existing?.artifacts || []
+                                        logEntries: existing?.logEntries ?? [],
+                                        artifacts: existing?.artifacts ?? []
                                     };
                                 })
                             }
@@ -341,14 +335,14 @@ export class LinesBoard {
         }
     }
 
-    activeTask(): TaskDraft | null {
+    activeTask(): ResearchTaskDto | null {
         const li = this.activeLineIndex();
         const ti = this.activeTaskIndex();
         if (li < 0 || ti < 0) return null;
-        return this.lines()[li]?.tasks[ti] ?? null;
+        return (this.lines()[li]?.tasks ?? [])[ti] ?? null;
     }
 
-    onTaskSave(updated: TaskDraft) {
+    onTaskSave(updated: ResearchTaskDto) {
         const li = this.activeLineIndex();
         const ti = this.activeTaskIndex();
         const line = this.lines()[li];
@@ -366,7 +360,7 @@ export class LinesBoard {
                 this.lines.update(list =>
                     list.map((l, idx) =>
                         idx === li
-                            ? {...l, tasks: l.tasks.map((t, j) => j === ti ? {...updated, ...saved} : t)}
+                            ? {...l, tasks: (l.tasks ?? []).map((t, j) => j === ti ? {...updated, ...saved} : t)}
                             : l
                     )
                 );
@@ -386,7 +380,7 @@ export class LinesBoard {
         this.modal.set('none');
     }
 
-    activeLine(): LineDraft | null {
+    activeLine(): ResearchLineDto | null {
         const i = this.activeLineIndex();
         return i >= 0 ? this.lines()[i] ?? null : null;
     }
