@@ -1,7 +1,7 @@
 export type BlindingType = 'OPEN_LABEL' | 'SINGLE_BLIND' | 'DOUBLE_BLIND' | 'TRIPLE_BLIND';
 
 export interface ProtocolDto {
-  id: number;
+  id: number | null;
   primaryOutcome: string;
   sampleSizeJustification: string;
   statisticalMethod: string;
@@ -14,12 +14,12 @@ export interface ProtocolDto {
 }
 
 export interface PrimaryOutcomeDto {
-  id: number;
+  id: number | null;
   text: string;
 }
 
 export interface TrackedParameterDto {
-  id: number;
+  id: number | null;
   name: string;
   unit: string;
   referenceMin?: number;
@@ -27,7 +27,7 @@ export interface TrackedParameterDto {
 }
 
 export interface ResearchDto {
-  id: number;
+  id: number | null;
   title: string;
   hypothesis: string;
   description: string;

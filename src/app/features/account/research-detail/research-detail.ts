@@ -74,8 +74,8 @@ editingId = signal<number | null>(null);
     private loadedSubjectParamFields = signal<Map<string, ParameterField[]>>(new Map());
 
     /** Cache for mapping IDs during save */
-    private _loadedPrimaryOutcomes = signal<{id: number, text: string}[]>([]);
-    private _loadedProtocolId = signal<number>(0);
+    private _loadedPrimaryOutcomes = signal<{id: number | null, text: string}[]>([]);
+    private _loadedProtocolId = signal<number | null>(0);
 
     // ── Computed mention sources (derived from groups + task artifacts) ──
     mentionableSubjects = computed<MentionableSubject[]>(() => {
@@ -193,7 +193,7 @@ editingId = signal<number | null>(null);
         if (this.isSaving()) return;
 
         const dto: ResearchDto = {
-            id: this.editingId() ?? 0,
+            id: this.editingId() ?? null,
             title: this.title(),
             hypothesis: this.hypothesis(),
             description: this.description(),
@@ -213,14 +213,14 @@ editingId = signal<number | null>(null);
             primaryOutcomes: this.primaryOutcomes().map(text => {
                 const existing = this._loadedPrimaryOutcomes().find(o => o.text === text);
                 return {
-                    id: existing ? existing.id : 0,
+                    id: existing ? existing.id : null,
                     text
                 };
             }),
             trackedParameters: this.trackedParameters().map(p => {
                 const existing = this.loadedTrackedParameters().find(lp => lp.name === p.name);
                 return {
-                    id: existing ? Number(existing.id) : 0,
+                    id: existing ? Number(existing.id) : null,
                     name: p.name,
                     unit: p.unit,
                     referenceMin: p.referenceMin,
