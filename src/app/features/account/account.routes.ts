@@ -8,7 +8,16 @@ export const ACCOUNT_ROUTES: Routes = [
     children: [
       {
         path: '',
+        redirectTo: 'my-researches',
+        pathMatch: 'full',
+      },
+      {
+        path: 'my-researches',
         loadComponent: () => import('./dashboard/dashboard'),
+      },
+      {
+        path: 'researches/pending-review',
+        loadComponent: () => import('./pending-review/pending-review'),
       },
       {
         path: 'new',

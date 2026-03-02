@@ -17,6 +17,10 @@ export class AuthService {
     private _user = signal<UserDto | null>(null);
     user = computed(() => this._user());
 
+    isAdmin = computed(() => this.user()?.role === 'ADMIN');
+    isSupervisor = computed(() => this.user()?.role === 'RESEARCH_SUPERVISOR');
+    canReview = computed(() => this.isAdmin() || this.isSupervisor());
+
     private readonly API_URL = environment.apiBaseUrl.endsWith('/')
         ? environment.apiBaseUrl
         : `${environment.apiBaseUrl}/`;

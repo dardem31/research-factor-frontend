@@ -65,7 +65,7 @@ export class ResearchService {
     }
 
     submitForReview(id: string) {
-        return this.crud.submitForReview(id);
+        return this.api.submitForReview(id);
     }
     removeLine(projectId: string, lineId: string) {
         return this.lines.removeLine(projectId, lineId);
