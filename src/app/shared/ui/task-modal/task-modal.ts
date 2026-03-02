@@ -57,7 +57,7 @@ export class TaskModal implements OnInit {
   editTitle = '';
   editDescription = '';
   editLogEntries: LogEntry[] = [];
-  editArtifacts: Artifact[] = [];
+  editArtifacts = signal<Artifact[]>([]);
 
   // ── UI state ──
   activeTab = signal<'general' | 'logs' | 'artifacts'>('general');
@@ -99,23 +99,26 @@ export class TaskModal implements OnInit {
     this.editTitle = t.title;
     this.editDescription = t.description;
     this.editLogEntries = [...(t.logEntries ?? [])];
-    this.editArtifacts = [...(t.artifacts ?? [])];
+    this.editArtifacts.set([...(t.artifacts ?? [])]);
 
     // Fetch artifacts from backend if task exists
     if (t.id) {
-        this.artifactApiService.getArtifactsByTaskId(Number(t.id)).subscribe(artifacts => {
-            this.editArtifacts = artifacts.map(a => ({
-                id: String(a.id),
-                type: a.type as ArtifactType,
-                fileName: a.storageUrl || 'Unnamed Artifact', // ArtifactDto doesn't have fileName, using storageUrl
-                storageUrl: a.storageUrl || '',
-                sha256: a.sha256 || '',
-                metadata: a.metadata ? JSON.parse(a.metadata) : {}
-            }));
-        });
+        this.refreshArtifacts(Number(t.id));
     }
   }
 
+  private refreshArtifacts(taskId: number) {
+    this.artifactApiService.getArtifactsByTaskId(taskId).subscribe(artifacts => {
+      this.editArtifacts.set(artifacts.map(a => ({
+        id: String(a.id),
+        type: a.type as ArtifactType,
+        fileName: a.storageUrl || 'Unnamed Artifact',
+        storageUrl: a.storageUrl || '',
+        sha256: a.sha256 || '',
+        metadata: a.metadata ? JSON.parse(a.metadata) : {}
+      })));
+    });
+  }
   // ── Mention logic ──
 
   onLogInput(event: Event) {
@@ -350,34 +353,24 @@ export class TaskModal implements OnInit {
             storageUrl: name // Map name to storageUrl or similar logic for now
         };
 
-        this.artifactApiService.createArtifact(dto).subscribe(saved => {
-            this.editArtifacts = [
-                ...this.editArtifacts,
-                {
-                    id: String(saved.id),
-                    type: saved.type as ArtifactType,
-                    fileName: saved.storageUrl || name,
-                    storageUrl: saved.storageUrl || '',
-                    sha256: saved.sha256 || '',
-                    metadata: {}
-                }
-            ];
+        this.artifactApiService.createArtifact(dto).subscribe(() => {
             this.newArtifactName = '';
             this.newArtifactType = 'RAW_DATA';
+            this.refreshArtifacts(Number(taskId));
         });
     }
   }
 
   removeArtifact(index: number) {
     if (this.readonly()) return;
-    const artifact = this.editArtifacts[index];
+    const artifact = this.editArtifacts()[index];
 
-    if (artifact.id && !artifact.id.includes('-')) { // Assuming UUIDs have hyphens and DB IDs don't
+    if (artifact.id && !artifact.id.includes('-')) {
         this.artifactApiService.deleteArtifact(Number(artifact.id)).subscribe(() => {
-            this.editArtifacts = this.editArtifacts.filter((_, i) => i !== index);
+            this.refreshArtifacts(Number(this.task().id));
         });
     } else {
-        this.editArtifacts = this.editArtifacts.filter((_, i) => i !== index);
+        this.editArtifacts.update(list => list.filter((_, i) => i !== index));
     }
   }
 
@@ -408,7 +401,7 @@ export class TaskModal implements OnInit {
       title: this.editTitle.trim() || this.task().title,
       description: this.editDescription,
       logEntries: this.editLogEntries,
-      artifacts: this.editArtifacts,
+      artifacts: this.editArtifacts(),
     });
   }
 
