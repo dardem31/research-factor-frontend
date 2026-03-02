@@ -23,7 +23,22 @@ export class ResearchApiService {
     if (filter.filter?.status) params['filter.status'] = filter.filter.status;
 
     return this.http.get<SearchResultDto<ResearchOverviewItem>>(
-      `${this.API_URL}api/v1/dashboard/research/list`,
+      `${this.API_URL}api/v1/dashboard/research/my-researches/list`,
+      { params, withCredentials: true }
+    );
+  }
+
+  listPendingReview(filter: ResearchFilterDto): Observable<SearchResultDto<ResearchOverviewItem>> {
+    let params: any = {};
+    if (filter.pagination) {
+      params['pagination.limit'] = filter.pagination.limit;
+      if (filter.pagination.startFrom) params['pagination.startFrom'] = filter.pagination.startFrom;
+      if (filter.pagination.order) params['pagination.order'] = filter.pagination.order;
+    }
+    if (filter.filter?.title) params['filter.title'] = filter.filter.title;
+
+    return this.http.get<SearchResultDto<ResearchOverviewItem>>(
+      `${this.API_URL}api/v1/dashboard/research/pending-review-researches/list`,
       { params, withCredentials: true }
     );
   }
@@ -32,9 +47,17 @@ export class ResearchApiService {
     let params: any = {};
     if (filter.filter?.title) params['filter.title'] = filter.filter.title;
     if (filter.filter?.status) params['filter.status'] = filter.filter.status;
-
     return this.http.get<{ count: number }>(
-      `${this.API_URL}api/v1/dashboard/research/count`,
+      `${this.API_URL}api/v1/dashboard/research/my-researches/count`,
+      { params, withCredentials: true }
+    );
+  }
+
+  countPendingReview(filter: ResearchFilterDto): Observable<{ count: number }> {
+    let params: any = {};
+    if (filter.filter?.title) params['filter.title'] = filter.filter.title;
+    return this.http.get<{ count: number }>(
+      `${this.API_URL}api/v1/dashboard/research/pending-review-researches/count`,
       { params, withCredentials: true }
     );
   }
@@ -70,8 +93,8 @@ export class ResearchApiService {
   }
 
   submitForReview(id: string): Observable<void> {
-    return this.http.post<void>(
-      `${this.API_URL}api/v1/dashboard/research/${id}/submit-review`,
+    return this.http.patch<void>(
+      `${this.API_URL}api/v1/dashboard/research/${id}/submit-for-review`,
       {},
       { withCredentials: true }
     );
