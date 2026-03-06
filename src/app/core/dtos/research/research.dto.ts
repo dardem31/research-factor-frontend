@@ -28,6 +28,8 @@ export interface TrackedParameterDto {
 
 export interface ResearchDto {
   id: number | null;
+  userId?: number;
+  supervisorId?: number;
   title: string;
   hypothesis: string;
   description: string;

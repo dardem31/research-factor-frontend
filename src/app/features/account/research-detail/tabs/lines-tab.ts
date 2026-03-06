@@ -14,6 +14,7 @@ import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../
       [subjects]="subjects()"
       [mentionableArtifacts]="mentionableArtifacts()"
       [trackedParameters]="trackedParameters()"
+      [readonly]="readonly()"
     />
   `,
   imports: [LinesBoard],
@@ -24,4 +25,5 @@ export class LinesTab {
   subjects = input<MentionableSubject[]>([]);
   mentionableArtifacts = input<MentionableArtifact[]>([]);
   trackedParameters = input<TrackedParameterInfo[]>([]);
+  readonly = input(false);
 }

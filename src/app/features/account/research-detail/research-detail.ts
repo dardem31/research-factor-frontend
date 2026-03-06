@@ -8,6 +8,7 @@ import {ParameterField} from '../../../core/models/research/parameter-field.mode
 import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../core/dtos/research/param-draft.dto';
 import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
+import {AuthService} from '../../../core/auth/auth.service';
 
 import {ProjectTab} from './tabs/project-tab';
 import {LinesTab} from './tabs/lines-tab';
@@ -25,11 +26,46 @@ type TabKey = 'project' | 'lines' | 'groups' | 'review';
 export default class ResearchDetailPage implements OnInit {
     private researchService = inject(ResearchService);
     private lineApiService = inject(ResearchLineApiService);
+    private authService = inject(AuthService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
 editingId = signal<number | null>(null);
     isEditMode = computed(() => this.editingId() !== null);
+
+    /** userId of the research owner (loaded from backend) */
+    private researchOwnerId = signal<number | null>(null);
+
+    /** supervisorId of the research (loaded from backend) */
+    private supervisorId = signal<number | null>(null);
+
+    /** true when the current user owns this research (or it's a new research) */
+    isOwner = computed(() => {
+        const ownerId = this.researchOwnerId();
+        const currentUser = this.authService.user();
+        // New research — user is creating it, so they are the owner
+        if (!this.isEditMode()) return true;
+        // Not yet loaded
+        if (ownerId === null || !currentUser) return false;
+        return currentUser.id === ownerId;
+    });
+
+    /** true when the current user can manage supervisor status (ADMIN or RESEARCH_SUPERVISOR) */
+    canManageSupervisor = computed(() => this.authService.canReview());
+
+    /** true when the "Set Supervisor" button should be shown */
+    showSetSupervisor = computed(() => {
+        return this.isEditMode() && this.canManageSupervisor() && !this.supervisorId();
+    });
+
+    /** true when the "Publish" button should be shown */
+    showPublish = computed(() => {
+        const currentUser = this.authService.user();
+        return this.isEditMode() &&
+               this.supervisorId() !== null &&
+               currentUser !== null &&
+               this.supervisorId() === currentUser.id;
+    });
 
     tab = signal<TabKey>('project');
     readonly tabs: { key: TabKey; label: string }[] = [
@@ -127,6 +163,8 @@ editingId = signal<number | null>(null);
     private loadProjectData(id: string) {
         this.researchService.getResearchById(id).subscribe({
             next: (dto) => {
+                this.researchOwnerId.set(dto.userId ?? null);
+                this.supervisorId.set(dto.supervisorId ?? null);
                 this.title.set(dto.title);
                 this.hypothesis.set(dto.hypothesis);
                 this.description.set(dto.description);
@@ -187,6 +225,22 @@ editingId = signal<number | null>(null);
 
     cancel() {
         this.router.navigate(['/account']);
+    }
+
+    setSupervisor() {
+        const id = this.editingId();
+        if (!id) return;
+        this.researchService.setSupervisor(String(id)).subscribe({
+            next: () => this.loadProjectData(String(id))
+        });
+    }
+
+    publish() {
+        const id = this.editingId();
+        if (!id) return;
+        this.researchService.publish(String(id)).subscribe({
+            next: () => this.loadProjectData(String(id))
+        });
     }
 
     saveProject() {

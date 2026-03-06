@@ -16,6 +16,9 @@ export class GroupsTab {
   groups = model.required<GroupDraft[]>();
   trackedParameters = input.required<ParamDraft[]>();
 
+  /** When true, all editing controls are hidden */
+  readonly = input(false);
+
   // ── Add group form ──
   newGroupLabel = '';
   newGroupDescription = '';

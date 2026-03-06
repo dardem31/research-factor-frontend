@@ -6,36 +6,38 @@
             <h2 class="text-xl font-bold text-gray-900">
                 {{ isEditMode() ? 'Редактирование исследования' : 'Новое исследование' }}
             </h2>
-            <button
-                    (click)="save.emit()"
-                    [disabled]="isSaving() || !title() || !hypothesis()"
-                    class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
-            >
-                @if (isSaving()) {
-                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Сохранение...
-                } @else {
-                    Сохранить проект
-                }
-            </button>
+            @if (!readonly()) {
+                <button
+                        (click)="save.emit()"
+                        [disabled]="isSaving() || !title() || !hypothesis()"
+                        class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+                >
+                    @if (isSaving()) {
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Сохранение...
+                    } @else {
+                        Сохранить проект
+                    }
+                </button>
+            }
         </div>
         <p class="mt-1 text-sm text-gray-500">Основная информация и гипотеза.</p>
 
         <div class="mt-6 space-y-5">
             <div>
                 <label class="block text-sm font-medium text-gray-700">Название *</label>
-                <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Effect of Supplement X on Fasting Glucose in Healthy Adults" [(ngModel)]="title" />
+                <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="Effect of Supplement X on Fasting Glucose in Healthy Adults" [(ngModel)]="title" [disabled]="readonly()" />
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Гипотеза *</label>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Supplement X reduces fasting glucose by ≥10% compared to placebo over 8 weeks" [(ngModel)]="hypothesis"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="Supplement X reduces fasting glucose by ≥10% compared to placebo over 8 weeks" [(ngModel)]="hypothesis" [disabled]="readonly()"></textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Описание</label>
-                <textarea rows="3" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Подробное описание исследования..." [(ngModel)]="description"></textarea>
+                <textarea rows="3" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="Подробное описание исследования..." [(ngModel)]="description" [disabled]="readonly()"></textarea>
             </div>
         </div>
     </div>
@@ -48,47 +50,47 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700">Primary Outcome *</label>
                 <p class="mt-0.5 text-xs text-gray-400">Что является успехом для этого исследования</p>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Reduction of fasting glucose by ≥10% vs placebo after 8 weeks" [(ngModel)]="protocolPrimaryOutcome"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Reduction of fasting glucose by ≥10% vs placebo after 8 weeks" [(ngModel)]="protocolPrimaryOutcome" [disabled]="readonly()"></textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Sample Size Justification</label>
                 <p class="mt-0.5 text-xs text-gray-400">Power calculation и обоснование</p>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Based on a power of 0.80 and alpha of 0.05..." [(ngModel)]="protocolSampleSizeJustification"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Based on a power of 0.80 and alpha of 0.05..." [(ngModel)]="protocolSampleSizeJustification" [disabled]="readonly()"></textarea>
             </div>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Statistical Method</label>
-                    <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Two-tailed t-test, ANOVA" [(ngModel)]="protocolStatisticalMethod" />
+                    <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Two-tailed t-test, ANOVA" [(ngModel)]="protocolStatisticalMethod" [disabled]="readonly()" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Randomization Method</label>
-                    <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Block randomization" [(ngModel)]="protocolRandomizationMethod" />
+                    <input type="text" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Block randomization" [(ngModel)]="protocolRandomizationMethod" [disabled]="readonly()" />
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Blinding Details</label>
                 <p class="mt-0.5 text-xs text-gray-400">Кто знает о распределении по группам и на каком этапе</p>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Single-blind: subjects do not know group assignment" [(ngModel)]="protocolBlindingDetails"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Single-blind: subjects do not know group assignment" [(ngModel)]="protocolBlindingDetails" [disabled]="readonly()"></textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Intervention Description</label>
                 <p class="mt-0.5 text-xs text-gray-400">Что получает каждая группа</p>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Group A receives Supplement X 500mg daily; Group B receives placebo" [(ngModel)]="protocolInterventionDescription"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Group A receives Supplement X 500mg daily; Group B receives placebo" [(ngModel)]="protocolInterventionDescription" [disabled]="readonly()"></textarea>
             </div>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Inclusion Criteria</label>
-                    <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Adults 18-65, BMI 20-30" [(ngModel)]="protocolInclusionCriteria"></textarea>
+                    <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Adults 18-65, BMI 20-30" [(ngModel)]="protocolInclusionCriteria" [disabled]="readonly()"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Exclusion Criteria</label>
-                    <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Pregnant or breastfeeding" [(ngModel)]="protocolExclusionCriteria"></textarea>
+                    <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., Pregnant or breastfeeding" [(ngModel)]="protocolExclusionCriteria" [disabled]="readonly()"></textarea>
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Early Stopping Criteria</label>
                 <p class="mt-0.5 text-xs text-gray-400">Условия, при которых исследование останавливается</p>
-                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., If >20% of subjects report severe adverse events" [(ngModel)]="protocolEarlyStoppingCriteria"></textarea>
+                <textarea rows="2" class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500" placeholder="e.g., If >20% of subjects report severe adverse events" [(ngModel)]="protocolEarlyStoppingCriteria" [disabled]="readonly()"></textarea>
             </div>
         </div>
     </div>
@@ -103,17 +105,21 @@
                 @for (outcome of primaryOutcomes(); track $index; let i = $index) {
                     <div class="flex items-start justify-between gap-2 rounded-md bg-gray-50 px-3 py-2.5 text-sm ring-1 ring-gray-200">
                         <span class="text-gray-800">{{ outcome }}</span>
-                        <button class="shrink-0 cursor-pointer text-xs text-gray-400 hover:text-red-500" (click)="removeOutcome(i)">×</button>
+                        @if (!readonly()) {
+                            <button class="shrink-0 cursor-pointer text-xs text-gray-400 hover:text-red-500" (click)="removeOutcome(i)">×</button>
+                        }
                     </div>
                 }
             </div>
         } @else {
             <p class="mt-4 text-sm italic text-gray-400">Пока нет Primary Outcomes.</p>
         }
-        <div class="mt-4 flex gap-2">
-            <input type="text" class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Does the intervention reduce fasting glucose by more than 10%?" [(ngModel)]="newOutcomeText" (keydown.enter)="addOutcome()" />
-            <button class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40" [disabled]="!newOutcomeText.trim()" (click)="addOutcome()">+</button>
-        </div>
+        @if (!readonly()) {
+            <div class="mt-4 flex gap-2">
+                <input type="text" class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="e.g., Does the intervention reduce fasting glucose by more than 10%?" [(ngModel)]="newOutcomeText" (keydown.enter)="addOutcome()" />
+                <button class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40" [disabled]="!newOutcomeText.trim()" (click)="addOutcome()">+</button>
+            </div>
+        }
     </div>
 
     <!-- ─── Tracked Parameters ─── -->
@@ -126,16 +132,20 @@
                 @for (p of trackedParameters(); track $index; let i = $index) {
                     <div class="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-sm ring-1 ring-gray-200">
                         <span class="text-gray-800">{{ p.name }} <span class="text-gray-400">({{ p.unit }})</span></span>
-                        <button class="cursor-pointer text-xs text-gray-400 hover:text-red-500" (click)="removeParam(i)">×</button>
+                        @if (!readonly()) {
+                            <button class="cursor-pointer text-xs text-gray-400 hover:text-red-500" (click)="removeParam(i)">×</button>
+                        }
                     </div>
                 }
             </div>
         }
-        <div class="mt-4 flex gap-2">
-            <input type="text" class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Название, напр.: Fasting glucose" [(ngModel)]="newParamName" />
-            <input type="text" class="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Ед." [(ngModel)]="newParamUnit" (keydown.enter)="addParam()" />
-            <button class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40" [disabled]="!newParamName.trim() || !newParamUnit.trim()" (click)="addParam()">+</button>
-        </div>
+        @if (!readonly()) {
+            <div class="mt-4 flex gap-2">
+                <input type="text" class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Название, напр.: Fasting glucose" [(ngModel)]="newParamName" />
+                <input type="text" class="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" placeholder="Ед." [(ngModel)]="newParamUnit" (keydown.enter)="addParam()" />
+                <button class="cursor-pointer rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-40" [disabled]="!newParamName.trim() || !newParamUnit.trim()" (click)="addParam()">+</button>
+            </div>
+        }
     </div>
 
 </div>

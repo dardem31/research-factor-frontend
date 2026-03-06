@@ -1,4 +1,4 @@
-import {Component, model, output} from '@angular/core';
+import {Component, input, model, output} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
 import {BlindingType} from '../../../../core/dtos/research/research.dto';
@@ -39,6 +39,9 @@ export class ProjectTab {
   // ── Editing mode (for header text) ──
   isEditMode = model(false);
   isSaving = model(false);
+
+  /** When true, all editing controls are hidden */
+  readonly = input(false);
 
   // ── Events ──
   save = output<void>();

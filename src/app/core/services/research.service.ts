@@ -39,8 +39,16 @@ export class ResearchService {
         return this.api.listResearch(filter);
     }
 
+    listPendingReview(filter: ResearchFilterDto) {
+        return this.api.listPendingReview(filter);
+    }
+
     countResearch(filter: ResearchFilterDto) {
         return this.api.countResearch(filter);
+    }
+
+    countPendingReview(filter: ResearchFilterDto) {
+        return this.api.countPendingReview(filter);
     }
 
     getResearchById(id: string) {
@@ -67,6 +75,15 @@ export class ResearchService {
     submitForReview(id: string) {
         return this.api.submitForReview(id);
     }
+
+    setSupervisor(id: string) {
+        return this.api.setSupervisor(id);
+    }
+
+    publish(id: string) {
+        return this.api.publish(id);
+    }
+
     removeLine(projectId: string, lineId: string) {
         return this.lines.removeLine(projectId, lineId);
     }

@@ -99,4 +99,20 @@ export class ResearchApiService {
       { withCredentials: true }
     );
   }
+
+  setSupervisor(id: string): Observable<void> {
+    return this.http.patch<void>(
+      `${this.API_URL}api/v1/dashboard/research/${id}/set-supervisor`,
+      {},
+      { withCredentials: true }
+    );
+  }
+
+  publish(id: string): Observable<void> {
+    return this.http.patch<void>(
+      `${this.API_URL}api/v1/dashboard/research/${id}/publish`,
+      {},
+      { withCredentials: true }
+    );
+  }
 }

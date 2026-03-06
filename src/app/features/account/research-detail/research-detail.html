@@ -16,13 +16,29 @@
             }
         </div>
         <div class="flex shrink-0 items-center gap-2 pb-px">
+            @if (showSetSupervisor()) {
+                <button
+                        class="cursor-pointer rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700"
+                        (click)="setSupervisor()"
+                >Вести Проект
+            </button>
+            }
+
+            @if (showPublish()) {
+                <button
+                        class="cursor-pointer rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-green-700"
+                        (click)="publish()"
+                >Опубликовать
+                </button>
+            }
+
             <button
                     class="cursor-pointer rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                     (click)="cancel()"
             >Отмена
             </button>
-        </div>
     </div>
+</div>
 
     <!-- Tab content -->
     @if (tab() === 'project') {
@@ -42,6 +58,7 @@
                 [(primaryOutcomes)]="primaryOutcomes"
                 [(trackedParameters)]="trackedParameters"
                 [isEditMode]="isEditMode()"
+                [readonly]="!isOwner()"
                 [(isSaving)]="isSaving"
                 (save)="saveProject()"
         />
@@ -54,6 +71,7 @@
                 [subjects]="mentionableSubjects()"
                 [mentionableArtifacts]="mentionableArtifacts()"
                 [trackedParameters]="trackedParameterInfos()"
+                [readonly]="!isOwner()"
         />
     }
 
@@ -61,6 +79,7 @@
         <rf-groups-tab
                 [(groups)]="groups"
                 [trackedParameters]="trackedParameters()"
+                [readonly]="!isOwner()"
         />
     }
 
