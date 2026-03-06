@@ -39,6 +39,9 @@ editingId = signal<number | null>(null);
     /** supervisorId of the research (loaded from backend) */
     private supervisorId = signal<number | null>(null);
 
+    /** current status of the research */
+    private status = signal<string | null>(null);
+
     /** true when the current user owns this research (or it's a new research) */
     isOwner = computed(() => {
         const ownerId = this.researchOwnerId();
@@ -62,6 +65,7 @@ editingId = signal<number | null>(null);
     showPublish = computed(() => {
         const currentUser = this.authService.user();
         return this.isEditMode() &&
+               this.status() === 'PENDING_REVIEW' &&
                this.supervisorId() !== null &&
                currentUser !== null &&
                this.supervisorId() === currentUser.id;
@@ -165,6 +169,7 @@ editingId = signal<number | null>(null);
             next: (dto) => {
                 this.researchOwnerId.set(dto.userId ?? null);
                 this.supervisorId.set(dto.supervisorId ?? null);
+                this.status.set(dto.status ?? null);
                 this.title.set(dto.title);
                 this.hypothesis.set(dto.hypothesis);
                 this.description.set(dto.description);
@@ -249,6 +254,7 @@ editingId = signal<number | null>(null);
         const dto: ResearchDto = {
             id: this.editingId() ?? null,
             title: this.title(),
+            status: "DRAFT",
             hypothesis: this.hypothesis(),
             description: this.description(),
             blindingType: this.blindingType(),

@@ -1,3 +1,5 @@
+import {ResearchStatus} from "../../models/research/research-status.model";
+
 export type BlindingType = 'OPEN_LABEL' | 'SINGLE_BLIND' | 'DOUBLE_BLIND' | 'TRIPLE_BLIND';
 
 export interface ProtocolDto {
@@ -31,6 +33,7 @@ export interface ResearchDto {
   userId?: number;
   supervisorId?: number;
   title: string;
+  status: ResearchStatus;
   hypothesis: string;
   description: string;
   blindingType: BlindingType;
