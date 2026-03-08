@@ -7,6 +7,7 @@ import {StageQuestionApiService} from '../../../core/services/research/stage-que
 import {StageQuestionDto} from '../../../core/dtos/research/stage-question.dto';
 import {ResearchTaskApiService} from '../../../core/services/research/research-task-api.service';
 import {ResearchTaskDto} from '../../../core/dtos/research/research-task.dto';
+import {DURATION_UNIT_LABELS, DurationUnit} from "../../../core/models/research/research-line.model";
 
 type ModalType = 'none' | 'editLine' | 'stageQuestions' | 'editTask';
 
@@ -61,9 +62,13 @@ export class LinesBoard {
     // Temp form fields
     editLineTitle = '';
     editLineDescription = '';
-    editLineDuration = '';
+    editLineDurationValue: number | null = null;
+    editLineDurationUnit: DurationUnit = 'WEEKS';
     newQuestionText = '';
     newTaskTitle = '';
+
+    protected readonly DURATION_UNIT_LABELS = DURATION_UNIT_LABELS;
+    protected readonly DURATION_UNITS = Object.keys(DURATION_UNIT_LABELS) as DurationUnit[];
 
     // ════════════════ Lines (columns) ════════════════
 
@@ -74,7 +79,8 @@ export class LinesBoard {
             title: 'Research Line ' + newOrder,
             sequenceOrder: newOrder,
             status: 'LOCKED',
-            duration: ''
+            durationValue: 2,
+            durationUnit: 'WEEKS'
         };
 
         this.lineApiService.createResearchLine(dto).subscribe(saved => {
@@ -144,7 +150,8 @@ export class LinesBoard {
         this.activeLineIndex.set(lineIndex);
         this.editLineTitle = line.title;
         this.editLineDescription = line.description ?? '';
-        this.editLineDuration = line.duration ?? '';
+        this.editLineDurationValue = line.durationValue ?? null;
+        this.editLineDurationUnit = line.durationUnit ?? 'WEEKS';
         this.modal.set('editLine');
     }
 
@@ -159,7 +166,8 @@ export class LinesBoard {
                 title: this.editLineTitle.trim() || line.title,
                 sequenceOrder: i + 1,
                 status: 'LOCKED',
-                duration: this.editLineDuration
+                durationValue: this.editLineDurationValue,
+                durationUnit: this.editLineDurationUnit
             };
 
             this.lineApiService.updateResearchLine(dto).subscribe(updated => {
@@ -170,7 +178,8 @@ export class LinesBoard {
                                 ...l,
                                 title: updated.title,
                                 description: this.editLineDescription,
-                                duration: updated.duration || ''
+                                durationValue: updated.durationValue,
+                                durationUnit: updated.durationUnit
                             }
                             : l
                     )

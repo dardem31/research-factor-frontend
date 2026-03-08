@@ -61,7 +61,6 @@
           <div class="rounded-md bg-white p-3 ring-1 ring-gray-200">
             <p class="text-sm font-medium text-gray-800">{{ line.title }}</p>
             <div class="mt-1 flex gap-3 text-xs text-gray-500">
-              @if (line.duration) { <span>Duration: {{ line.duration }}</span> }
               <span>Stage Questions: {{ (line.stageQuestions ?? []).length }}</span>
               <span>Tasks: {{ (line.tasks ?? []).length }}</span>
             </div>

@@ -50,9 +50,6 @@
               </button>
             }
           </div>
-          @if (line.duration) {
-            <p class="mt-1 text-xs font-medium text-indigo-600">{{ line.duration }}</p>
-          }
           @if (line.description) {
             <p class="mt-1 line-clamp-2 text-xs text-gray-500">{{ line.description }}</p>
           }
@@ -72,7 +69,7 @@
             >
               Stage Questions
               @if ((line.stageQuestions ?? []).length > 0) {
-                <span class="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">{{ line.stageQuestions!.length }}</span>
+                <span class="ml-1 inline-flex h-4 -4 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">{{ line.stageQuestions!.length }}</span>
               }
             </button>
           </div>
@@ -151,12 +148,22 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Длительность</label>
-          <input
-            type="text"
-            class="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-            placeholder="e.g., 4 weeks, 30 days"
-            [(ngModel)]="editLineDuration"
-          />
+          <div class="mt-1 flex gap-2">
+            <input
+              type="number"
+              class="w-24 rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              placeholder="0"
+              [(ngModel)]="editLineDurationValue"
+            />
+            <select
+              class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+              [(ngModel)]="editLineDurationUnit"
+            >
+              @for (unit of DURATION_UNITS; track unit) {
+                <option [value]="unit">{{ DURATION_UNIT_LABELS[unit] }}</option>
+              }
+            </select>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Описание</label>
@@ -168,7 +175,6 @@
           ></textarea>
         </div>
       </div>
-
       <div class="mt-6 flex justify-end gap-3">
         <button
           class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
