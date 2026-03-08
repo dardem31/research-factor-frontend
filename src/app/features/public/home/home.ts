@@ -1,9 +1,11 @@
 import {Component} from '@angular/core';
+import {RouterLink} from '@angular/router';
 
 @Component({
   standalone: true,
   templateUrl: './home.html',
   styleUrls: ['./home.scss'],
+  imports: [RouterLink],
 })
 export default class HomePage {
   features = [

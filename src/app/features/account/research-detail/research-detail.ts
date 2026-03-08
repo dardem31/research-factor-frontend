@@ -8,6 +8,7 @@ import {ParameterField} from '../../../core/models/research/parameter-field.mode
 import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../core/dtos/research/param-draft.dto';
 import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
+import {ResearchPublicApiService} from '../../../core/services/research/research-public-api.service';
 import {AuthService} from '../../../core/auth/auth.service';
 
 import {ProjectTab} from './tabs/project-tab';
@@ -26,9 +27,13 @@ type TabKey = 'project' | 'lines' | 'groups' | 'review';
 export default class ResearchDetailPage implements OnInit {
     private researchService = inject(ResearchService);
     private lineApiService = inject(ResearchLineApiService);
+    private publicApiService = inject(ResearchPublicApiService);
     private authService = inject(AuthService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
+
+    /** When true, the page is in public showcase mode (readonly, public API) */
+    publicMode = signal(false);
 
 editingId = signal<number | null>(null);
     isEditMode = computed(() => this.editingId() !== null);
@@ -44,6 +49,7 @@ editingId = signal<number | null>(null);
 
     /** true when the current user owns this research (or it's a new research) */
     isOwner = computed(() => {
+        if (this.publicMode()) return false;
         const ownerId = this.researchOwnerId();
         const currentUser = this.authService.user();
         // New research — user is creating it, so they are the owner
@@ -58,11 +64,13 @@ editingId = signal<number | null>(null);
 
     /** true when the "Set Supervisor" button should be shown */
     showSetSupervisor = computed(() => {
+        if (this.publicMode()) return false;
         return this.isEditMode() && this.canManageSupervisor() && !this.supervisorId();
     });
 
     /** true when the "Publish" button should be shown */
     showPublish = computed(() => {
+        if (this.publicMode()) return false;
         const currentUser = this.authService.user();
         return this.isEditMode() &&
                this.status() === 'PENDING_REVIEW' &&
@@ -157,79 +165,96 @@ editingId = signal<number | null>(null);
     // ════════════════ Lifecycle ════════════════
 
     ngOnInit() {
+        const isPublic = this.route.snapshot.data['publicMode'] === true;
+        this.publicMode.set(isPublic);
+
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.editingId.set(Number(id));
-            this.loadProjectData(id);
+            if (isPublic) {
+                this.loadPublicProjectData(id);
+            } else {
+                this.loadProjectData(id);
+            }
         }
     }
 
     private loadProjectData(id: string) {
         this.researchService.getResearchById(id).subscribe({
-            next: (dto) => {
-                this.researchOwnerId.set(dto.userId ?? null);
-                this.supervisorId.set(dto.supervisorId ?? null);
-                this.status.set(dto.status ?? null);
-                this.title.set(dto.title);
-                this.hypothesis.set(dto.hypothesis);
-                this.description.set(dto.description);
-                this.blindingType.set(dto.blindingType);
-
-                if (dto.protocol) {
-                    this._loadedProtocolId.set(dto.protocol.id);
-                    this.protocolPrimaryOutcome.set(dto.protocol.primaryOutcome || '');
-                    this.protocolSampleSizeJustification.set(dto.protocol.sampleSizeJustification || '');
-                    this.protocolStatisticalMethod.set(dto.protocol.statisticalMethod || '');
-                    this.protocolRandomizationMethod.set(dto.protocol.randomizationMethod || '');
-                    this.protocolBlindingDetails.set(dto.protocol.blindingDetails || '');
-                    this.protocolInterventionDescription.set(dto.protocol.interventionDescription || '');
-                    this.protocolInclusionCriteria.set(dto.protocol.inclusionCriteria || '');
-                    this.protocolExclusionCriteria.set(dto.protocol.exclusionCriteria || '');
-                    this.protocolEarlyStoppingCriteria.set(dto.protocol.earlyStoppingCriteria || '');
-                }
-
-                this.primaryOutcomes.set(dto.primaryOutcomes?.map(o => o.text) ?? []);
-                // Cache primary outcomes with IDs if needed for future logic,
-                // but for now ensure we can map them back during save
-                this._loadedPrimaryOutcomes.set(dto.primaryOutcomes?.map(o => ({
-                    id: o.id,
-                    text: o.text
-                })) ?? []);
-
-                console.log(this.primaryOutcomes)
-                this.trackedParameters.set(dto.trackedParameters?.map(p => ({
-                    name: p.name,
-                    unit: p.unit,
-                    referenceMin: p.referenceMin,
-                    referenceMax: p.referenceMax
-                })) ?? []);
-
-                // Preserve IDs for sub-entities
-                if (dto.trackedParameters) {
-                    this.loadedTrackedParameters.set(dto.trackedParameters.map(p => ({
-                        id: String(p.id),
-                        name: p.name,
-                        unit: p.unit
-                    })));
-                }
-
-                // Load research lines
-                this.lineApiService.getResearchLinesByResearchId(Number(id)).subscribe(linesDto => {
-                    this.lines.set(linesDto.map(ld => ({
-                        ...ld,
-                        description: ld.description ?? '',
-                        stageQuestions: [],
-                        tasks: []
-                    })));
-                });
-            }
+            next: (dto) => this.applyDto(dto, id)
         });
+    }
+
+    private loadPublicProjectData(id: string) {
+        this.publicApiService.getResearchById(id).subscribe({
+            next: (dto) => this.applyDto(dto, id)
+        });
+    }
+
+    private applyDto(dto: ResearchDto, id: string) {
+        this.researchOwnerId.set(dto.userId ?? null);
+        this.supervisorId.set(dto.supervisorId ?? null);
+        this.status.set(dto.status ?? null);
+        this.title.set(dto.title);
+        this.hypothesis.set(dto.hypothesis);
+        this.description.set(dto.description);
+        this.blindingType.set(dto.blindingType);
+
+        if (dto.protocol) {
+            this._loadedProtocolId.set(dto.protocol.id);
+            this.protocolPrimaryOutcome.set(dto.protocol.primaryOutcome || '');
+            this.protocolSampleSizeJustification.set(dto.protocol.sampleSizeJustification || '');
+            this.protocolStatisticalMethod.set(dto.protocol.statisticalMethod || '');
+            this.protocolRandomizationMethod.set(dto.protocol.randomizationMethod || '');
+            this.protocolBlindingDetails.set(dto.protocol.blindingDetails || '');
+            this.protocolInterventionDescription.set(dto.protocol.interventionDescription || '');
+            this.protocolInclusionCriteria.set(dto.protocol.inclusionCriteria || '');
+            this.protocolExclusionCriteria.set(dto.protocol.exclusionCriteria || '');
+            this.protocolEarlyStoppingCriteria.set(dto.protocol.earlyStoppingCriteria || '');
+        }
+
+        this.primaryOutcomes.set(dto.primaryOutcomes?.map(o => o.text) ?? []);
+        this._loadedPrimaryOutcomes.set(dto.primaryOutcomes?.map(o => ({
+            id: o.id,
+            text: o.text
+        })) ?? []);
+
+        this.trackedParameters.set(dto.trackedParameters?.map(p => ({
+            name: p.name,
+            unit: p.unit,
+            referenceMin: p.referenceMin,
+            referenceMax: p.referenceMax
+        })) ?? []);
+
+        if (dto.trackedParameters) {
+            this.loadedTrackedParameters.set(dto.trackedParameters.map(p => ({
+                id: String(p.id),
+                name: p.name,
+                unit: p.unit
+            })));
+        }
+
+        // Load research lines (only for authenticated / dashboard mode)
+        if (!this.publicMode()) {
+            this.lineApiService.getResearchLinesByResearchId(Number(id)).subscribe(linesDto => {
+                this.lines.set(linesDto.map(ld => ({
+                    ...ld,
+                    description: ld.description ?? '',
+                    stageQuestions: [],
+                    tasks: []
+                })));
+            });
+        }
     }
 
     // ════════════════ Actions ════════════════
 
     cancel() {
-        this.router.navigate(['/account']);
+        if (this.publicMode()) {
+            this.router.navigate(['/showcase']);
+        } else {
+            this.router.navigate(['/account']);
+        }
     }
 
     setSupervisor() {

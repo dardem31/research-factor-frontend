@@ -35,7 +35,7 @@
             <button
                     class="cursor-pointer rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
                     (click)="cancel()"
-            >Отмена
+            >{{ publicMode() ? 'Назад' : 'Отмена' }}
             </button>
     </div>
 </div>
@@ -58,7 +58,7 @@
                 [(primaryOutcomes)]="primaryOutcomes"
                 [(trackedParameters)]="trackedParameters"
                 [isEditMode]="isEditMode()"
-                [readonly]="!isOwner()"
+                [readonly]="publicMode() || !isOwner()"
                 [(isSaving)]="isSaving"
                 (save)="saveProject()"
         />
@@ -71,7 +71,7 @@
                 [subjects]="mentionableSubjects()"
                 [mentionableArtifacts]="mentionableArtifacts()"
                 [trackedParameters]="trackedParameterInfos()"
-                [readonly]="!isOwner()"
+                [readonly]="publicMode() || !isOwner()"
         />
     }
 
@@ -79,7 +79,7 @@
         <rf-groups-tab
                 [(groups)]="groups"
                 [trackedParameters]="trackedParameters()"
-                [readonly]="!isOwner()"
+                [readonly]="publicMode() || !isOwner()"
         />
     }
 
