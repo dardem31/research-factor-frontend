@@ -5,7 +5,6 @@ import {Research} from '../../../core/models/research/research.model';
 import {ResearchLineDto} from '../../../core/dtos/research/research-line.dto';
 import {MentionableSubject, MentionableArtifact, TrackedParameterInfo} from '../../../shared/ui/task-modal/task-modal';
 import {ParameterField} from '../../../core/models/research/parameter-field.model';
-import {GroupDraft} from '../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../core/dtos/research/param-draft.dto';
 import {ResearchLineApiService} from '../../../core/services/research/research-line-api.service';
 import {ResearchPublicApiService} from '../../../core/services/research/research-public-api.service';
@@ -15,6 +14,7 @@ import {ProjectTab} from './tabs/project-tab';
 import {LinesTab} from './tabs/lines-tab';
 import {GroupsTab} from './tabs/groups-tab';
 import {ReviewTab} from './tabs/review-tab';
+import {SubjectGroup} from "../../../core/dtos/subject/subject-group.dto";
 
 type TabKey = 'project' | 'lines' | 'groups' | 'review';
 
@@ -113,7 +113,7 @@ editingId = signal<number | null>(null);
     primaryOutcomes = signal<string[]>([]);
     trackedParameters = signal<ParamDraft[]>([]);
     lines = signal<ResearchLineDto[]>([]);
-    groups = signal<GroupDraft[]>([]);
+    groups = signal<SubjectGroup[]>([]);
 
     /** Full tracked parameter data with IDs, preserved from loaded project */
     private loadedTrackedParameters = signal<TrackedParameterInfo[]>([]);

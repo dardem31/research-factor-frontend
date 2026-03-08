@@ -1,8 +1,8 @@
 import {Component, computed, input, model, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {GroupDraft} from '../../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
-import {SubjectDraft} from '../../../../core/dtos/research/subject-draft.dto';
+import {Subject} from "../../../../core/dtos/subject/subject.dto";
+import {SubjectGroup} from "../../../../core/dtos/subject/subject-group.dto";
 
 type GroupModal = 'none' | 'editGroup' | 'editSubject';
 
@@ -13,7 +13,7 @@ type GroupModal = 'none' | 'editGroup' | 'editSubject';
   imports: [FormsModule],
 })
 export class GroupsTab {
-  groups = model.required<GroupDraft[]>();
+  groups = model.required<SubjectGroup[]>();
   trackedParameters = input.required<ParamDraft[]>();
 
   /** When true, all editing controls are hidden */
@@ -110,7 +110,7 @@ export class GroupsTab {
   saveSubject() {
     const gi = this.editingSubjectGroupIndex();
     const si = this.editingSubjectIndex();
-    const draft: SubjectDraft = {
+    const draft: Subject = {
       code: this.editSubjectCode.trim(),
       remarks: this.editSubjectRemarks.trim(),
       kycVerified: this.editSubjectKycVerified,

@@ -1,7 +1,7 @@
 import {Component, computed, input} from '@angular/core';
 import {ResearchLineDto} from '../../../../core/dtos/research/research-line.dto';
-import {GroupDraft} from '../../../../core/dtos/research/group-draft.dto';
 import {ParamDraft} from '../../../../core/dtos/research/param-draft.dto';
+import {SubjectGroup} from "../../../../core/dtos/subject/subject-group.dto";
 
 @Component({
   standalone: true,
@@ -26,7 +26,7 @@ export class ReviewTab {
   primaryOutcomes = input<string[]>([]);
   trackedParameters = input<ParamDraft[]>([]);
   lines = input<ResearchLineDto[]>([]);
-  groups = input<GroupDraft[]>([]);
+  groups = input<SubjectGroup[]>([]);
   isEditMode = input(false);
 
   totalStageQuestions = computed(() =>
